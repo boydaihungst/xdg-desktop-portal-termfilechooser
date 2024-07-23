@@ -109,7 +109,7 @@ static int method_open_file(sd_bus_message *msg, void *data, sd_bus_error *ret_e
     }
     char *key;
     int inner_ret = 0;
-    int multiple, directory;
+    int multiple = 0, directory = 0;
     while ((ret = sd_bus_message_enter_container(msg, 'e', "sv")) > 0) {
         inner_ret = sd_bus_message_read(msg, "s", &key);
         if (inner_ret < 0) {
