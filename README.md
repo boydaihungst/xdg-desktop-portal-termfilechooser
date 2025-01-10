@@ -130,7 +130,15 @@ and additional options: `--multiple`, `--directory`, `--save`.
 
 ## Usage
 
+In both case it might just be enough to run either chrome or firefox with the env `GTK_USE_PORTAL=1`.
+
+### Firefox
+
 Firefox has a setting in its `about:config` to always use XDG desktop portal's file chooser: set `widget.use-xdg-desktop-portal.file-picker` to `1`. See https://wiki.archlinux.org/title/Firefox#XDG_Desktop_Portal_integration.
+
+### Chrome
+
+Set the env GTK_USE_PORTAL=1 following the recommendations of your distribution.
 
 ## Documentation
 
