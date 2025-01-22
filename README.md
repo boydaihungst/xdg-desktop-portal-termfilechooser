@@ -21,6 +21,14 @@
 By default, it will use the [yazi](https://github.com/sxyazi/yazi) file manager, but this is customizable.
 Based on [xdg-desktop-portal-wlr] (xdpw).
 
+## Deprecated
+
+Please use one of these forked repos for latest fixes.
+
+[https://github.com/hunkyburrito/xdg-desktop-portal-termfilechooser](https://github.com/hunkyburrito/xdg-desktop-portal-termfilechooser)
+
+[https://github.com/exquo/xdg-desktop-portal-termfilechooser](https://github.com/exquo/xdg-desktop-portal-termfilechooser)
+
 ## Installation
 
 ### Dependencies
