@@ -2,20 +2,20 @@
 
 <!--toc:start-->
 
--   [xdg-desktop-portal-termfilechooser](#xdg-desktop-portal-termfilechooser)
-    -   [Installation](#installation)
-        -   [Dependencies](#dependencies)
-        -   [Download the source](#download-the-source)
-        -   [Build](#build)
-        -   [Config files](#config-files)
-        -   [Disable the original file picker portal](#disable-the-original-file-picker-portal)
-        -   [Systemd service](#systemd-service)
-        -   [Test](#test)
-            -   [Troubleshooting](#troubleshooting)
-    -   [Usage](#usage)
-    -   [Documentation](#documentation)
-    -   [License](#license)
-    <!--toc:end-->
+- [xdg-desktop-portal-termfilechooser](#xdg-desktop-portal-termfilechooser)
+  - [Installation](#installation)
+    - [Dependencies](#dependencies)
+    - [Download the source](#download-the-source)
+    - [Build](#build)
+    - [Config files](#config-files)
+    - [Disable the original file picker portal](#disable-the-original-file-picker-portal)
+    - [Systemd service](#systemd-service)
+    - [Test](#test)
+      - [Troubleshooting](#troubleshooting)
+  - [Usage](#usage)
+  - [Documentation](#documentation)
+  - [License](#license)
+      <!--toc:end-->
 
 [xdg-desktop-portal] backend for choosing files with your favorite file chooser.
 By default, it will use the [yazi](https://github.com/sxyazi/yazi) file manager, but this is customizable.
@@ -63,21 +63,24 @@ is placed at `/usr/local/share/xdg-desktop-portal-termfilechooser/`
 
 Example:
 
--   `$HOME/.profile`
--   `.bashrc`
+- `$HOME/.profile`
+- `.bashrc`
 
 ```sh
 # use wezterm intead of kitty
 export TERMCMD="wezterm start --always-new-process"
 ```
 
--   `$HOME/.config/xdg-desktop-portal-termfilechooser/config`
+- `$HOME/.config/xdg-desktop-portal-termfilechooser/config`
+  Use yazi wrapper instead of ranger wrapper:
 
 ```conf
 [filechooser]
 cmd=/usr/local/share/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh
-default_dir=$HOME
+default_dir=/tmp
 ```
+
+`default_dir` is where holding unfinished file.
 
 ### Disable the original file picker portal
 
@@ -88,7 +91,6 @@ If your xdg-desktop-portal version
     /usr/libexec/xdg-desktop-portal --version
     # OR, if it says file not found
     /usr/lib64/xdg-desktop-portal --version
-    
 
 is >= [`1.18.0`](https://github.com/flatpak/xdg-desktop-portal/releases/tag/1.18.0), then you can specify the portal for FileChooser in `~/.config/xdg-desktop-portal/portals.conf` file (see the [flatpak docs](https://flatpak.github.io/xdg-desktop-portal/docs/portals.conf.html) and [ArchWiki](https://wiki.archlinux.org/title/XDG_Desktop_Portal#Configuration)):
 
@@ -114,27 +116,28 @@ and additional options: `--multiple`, `--directory`, `--save`.
 
 #### Troubleshooting
 
--   After editing termfilechooser's config, restart its service:
+- After editing termfilechooser's config, restart its service:
+  `systemctl --user restart xdg-desktop-portal-termfilechooser.service`
 
-          systemctl --user restart xdg-desktop-portal-termfilechooser.service
+- The termfilechooser's executable can also be launched directly:
 
--   The termfilechooser's executable can also be launched directly:
+      systemctl --user stop xdg-desktop-portal-termfilechooser.service
+      /usr/local/libexec/xdg-desktop-portal-termfilechooser -l TRACE -r
 
-          systemctl --user stop xdg-desktop-portal-termfilechooser.service
-          /usr/local/libexec/xdg-desktop-portal-termfilechooser -l TRACE -r &
+  or, if it says file/folder not found:
 
-    or, if it says file/folder not found:
+      systemctl --user stop xdg-desktop-portal-termfilechooser.service
+      /usr/lib64/xdg-desktop-portal-termfilechooser -l TRACE -r
 
-          systemctl --user stop xdg-desktop-portal-termfilechooser.service
-          /usr/lib64/xdg-desktop-portal-termfilechooser -l TRACE -r &
+  This way the output from the wrapper scripts (e.g. `ranger-wrapper.sh`) will be written to the same terminal. This is handy for using e.g. `set -x` in the scripts during debugging.
+  When termfilechooser runs as a `systemd` service, its output can be viewer with `journalctl`.
+  Increase `-n 1000` (lines) to show more lines
 
-    
-    This way the output from the wrapper scripts (e.g. `ranger-wrapper.sh`) will be written to the same terminal. This is handy for using e.g. `set -x` in the scripts during debugging.
-    When termfilechooser runs as a `systemd` service, its output can be viewer with `journalctl`.
+      journalctl -e -f --user -n 1000 -u xdg-desktop-portal-termfilechooser.service
 
--   Since [this merge request in GNOME](https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/4829), `GTK_USE_PORTAL=1` seems to be replaced with `GDK_DEBUG=portals`.
+- Since [this merge request in GNOME](https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/4829), `GTK_USE_PORTAL=1` seems to be replaced with `GDK_DEBUG=portals`.
 
--   See also: [Troubleshooting section in ArchWiki](https://wiki.archlinux.org/title/XDG_Desktop_Portal#Troubleshooting).
+- See also: [Troubleshooting section in ArchWiki](https://wiki.archlinux.org/title/XDG_Desktop_Portal#Troubleshooting).
 
 ## Usage
 

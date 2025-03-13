@@ -24,7 +24,7 @@ The configuration files use the INI file format. Example:
 
 ```
 [filechooser]
-cmd=/usr/share/xdg-desktop-portal-termfilechooser/ranger-wrapper.sh
+cmd=/usr/local/share/xdg-desktop-portal-termfilechooser/ranger-wrapper.sh
 ```
 
 # FILECHOOSER OPTIONS

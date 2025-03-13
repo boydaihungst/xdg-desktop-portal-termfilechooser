@@ -27,37 +27,47 @@ directory="$2"
 save="$3"
 path="$4"
 out="$5"
-cmd="vifm"
+cmd="/usr/bin/vifm"
 # "wezterm start --always-new-process" if you use wezterm
-termcmd="${TERMCMD:-kitty}"
+termcmd="${TERMCMD:-/usr/bin/kitty --title termfilechooser}"
+
+cleanup() {
+    if [ -f "$tmpfile" ]; then
+        /usr/bin/rm -f "$tmpfile" || :
+    fi
+    if [ "$save" = "1" ] && [ ! -s "$out" ] && [ -f "$path" ]; then
+        /usr/bin/rm "$path" || :
+    fi
+}
+
+trap cleanup EXIT HUP INT QUIT ABRT TERM
+
 # change this to "/tmp/xxxxxxx/.last_selected" if you only want to save last selected location
 # in session (flushed after reset device)
-last_selected_path_cfg="$HOME/.config/xdg-desktop-portal-termfilechooser/.last_selected"
-mkdir -p "$(dirname last_selected_path_cfg)"
+last_selected_path_cfg="${XDG_STATE_HOME:-$HOME/.local/state}/xdg-desktop-portal-termfilechooser/last_selected"
+/usr/bin/mkdir -p "$(/usr/bin/dirname "$last_selected_path_cfg")"
 if [ ! -f "$last_selected_path_cfg" ]; then
-    touch "$last_selected_path_cfg"
+    /usr/bin/touch "$last_selected_path_cfg"
 fi
-last_selected="$(cat "$last_selected_path_cfg")"
+last_selected="$(/usr/bin/cat "$last_selected_path_cfg")"
 
-Restore last selected path
+# Restore last selected path
 if [ -d "$last_selected" ]; then
-    # Save/download file
     save_to_file=""
     if [ "$save" = "1" ]; then
-        save_to_file="$(basename "$path")"
+        save_to_file="$(/usr/bin/basename "$path")"
         path="${last_selected}/${save_to_file}"
     else
         path="${last_selected}"
     fi
 fi
-
-if [[ -z "$path" ]]; then
+if [ -z "$path" ]; then
     path="$HOME"
 fi
 
 if [ "$save" = "1" ]; then
+    tmpfile=$(/usr/bin/mktemp)
     # Save/download file
-    set -- --choose-files "$out" -c "set statusline='Select save path (see tutorial in preview pane; try pressing <w> key if no preview)'" --select "$path"
     printf '%s' 'xdg-desktop-portal-termfilechooser saving files tutorial
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -73,34 +83,43 @@ Instructions:
    example by pressing <Enter>.
 
 Notes:
-1) This file is provided for your convenience. You
-   could delete it and choose another file to overwrite
-   that, for example.
+1) This file is provided for your convenience. You can
+	 only choose this placeholder file otherwise the save operation aborted.
 2) If you quit ranger without opening a file, this file
    will be removed and the save operation aborted.
 ' >"$path"
+    set -- --choose-files "$tmpfile" -c "set statusline='Select save path (see tutorial in preview pane; try pressing <w> key if no preview)'" --select "$path"
 elif [ "$directory" = "1" ]; then
     # upload files from a directory
-    set -- --choose-dir "$out" -c "set statusline='Select directory (quit in dir to select it)'"
+    set -- --choose-dir "$out" -c "set statusline='Select directory (quit in dir to select it)'" "$path"
 elif [ "$multiple" = "1" ]; then
     # upload multiple files
-    set -- --choose-files "$out" -c "set statusline='Select file(s) (press <t> key to select multiple)'"
+    set -- --choose-files "$out" -c "set statusline='Select file(s) (press <t> key to select multiple)'" "$path"
 else
     # upload only 1 file
-    set -- --choose-files "$out" -c "set statusline='Select file (open file to select it)'"
+    set -- --choose-files "$out" -c "set statusline='Select file (open file to select it)'" "$path"
 fi
 $termcmd -- $cmd "$@"
 
-# Remove file if the save operation aborted
-if [ "$save" = "1" ] && [ ! -s "$out" ]; then
-    rm "$path"
-else
-    # Save the last selected path for the next time, only download file operation is need to use this path, \
-    # the other three save last visited location automatically
-    selected_path=$(head -n 1 <"$out")
-    if [[ -d "$selected_path" ]]; then
+# case save file
+if [ "$save" = "1" ] && [ -s "$tmpfile" ]; then
+    selected_file=$(/usr/bin/head -n 1 "$tmpfile")
+    # Check if selected file is placeholder file
+    if [ -f "$selected_file" ] && /usr/bin/grep -qi "^xdg-desktop-portal-termfilechooser saving files tutorial" "$selected_file"; then
+        /usr/bin/cat "$tmpfile" >"$out"
+    fi
+fi
+
+# Saving last selected directory, even when save = 1 and selected file isn't valid placeholder file.
+if [ -s "$tmpfile" ] || [ -s "$out" ]; then
+    if [ -s "$out" ]; then
+        selected_path=$(head -n 1 <"$out")
+    elif [ -s "$tmpfile" ]; then
+        selected_path=$(head -n 1 <"$tmpfile")
+    fi
+    if [ -d "$selected_path" ]; then
         echo "$selected_path" >"$last_selected_path_cfg"
-    elif [[ -f "$selected_path" ]]; then
+    elif [ -f "$selected_path" ]; then
         dirname "$selected_path" >"$last_selected_path_cfg"
     fi
 fi

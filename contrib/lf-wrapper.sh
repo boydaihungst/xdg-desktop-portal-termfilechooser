@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/usr/bin/env bash
+
 # This wrapper script is invoked by xdg-desktop-portal-termfilechooser.
 #
 # Inputs:
@@ -19,19 +20,50 @@
 # one path per line.
 # If nothing is printed, then the operation is assumed to have been canceled.
 
-# Set default folder when download.
-default_dir="$HOME"
 multiple="$1"
 directory="$2"
 save="$3"
 path="$4"
 out="$5"
 cmd="/usr/bin/lf"
-termcmd="/usr/bin/kitty"
+termcmd="${TERMCMD:-/usr/bin/kitty --title termfilechooser}"
+
+cleanup() {
+	if [ -f "$tmpfile" ]; then
+		/usr/bin/rm -f "$tmpfile" || :
+	fi
+	if [ "$save" = "1" ] && [ ! -s "$out" ] && [ -f "$path" ]; then
+		/usr/bin/rm "$path" || : || n
+	fi
+}
+
+trap cleanup EXIT HUP INT QUIT ABRT TERM
+
+# change this to "/tmp/xxxxxxx/.last_selected" if you only want to save last selected location
+# in session (flushed after reset device)
+last_selected_path_cfg="${XDG_STATE_HOME:-$HOME/.local/state}/xdg-desktop-portal-termfilechooser/last_selected"
+/usr/bin/mkdir -p "$(/usr/bin/dirname "$last_selected_path_cfg")"
+if [ ! -f "$last_selected_path_cfg" ]; then
+	/usr/bin/touch "$last_selected_path_cfg"
+fi
+last_selected="$(/usr/bin/cat "$last_selected_path_cfg")"
+
+# Restore last selected path
+if [ -d "$last_selected" ]; then
+	save_to_file=""
+	if [ "$save" = "1" ]; then
+		save_to_file="$(/usr/bin/basename "$path")"
+		path="${last_selected}/${save_to_file}"
+	else
+		path="${last_selected}"
+	fi
+fi
+if [ -z "$path" ]; then
+	path="$HOME"
+fi
 if [ "$save" = "1" ]; then
-	# /usr/bin/touch $path
-	set -- -selection-path "$out" "$path"
-	printf '%s' 'xdg-desktop-portal-termfilechooser saving files tutorial
+	tmpfile=$(/usr/bin/mktemp)
+	/usr/bin/printf '%s' 'xdg-desktop-portal-termfilechooser saving files tutorial
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!                 === WARNING! ===                 !!!
@@ -45,20 +77,32 @@ Instructions:
 3) Confirm your selection by opening the file, for
    example by pressing <Enter>.
 Notes:
-1) This file is provided for your convenience. You
-   could delete it and choose another file to overwrite
-   that, for example.
+1) This file is provided for your convenience. You can
+	 only choose this placeholder file otherwise the save operation aborted.
 2) If you quit ranger without opening a file, this file
    will be removed and the save operation aborted.
 ' >"$path"
+	set -- -selection-path "$tmpfile" -last-dir-path="$last_selected_path_cfg" "$path"
 elif [ "$directory" = "1" ]; then
-	set -- -selection-path "$out" "$default_dir"
+	set -- -last-dir-path="$last_selected_path_cfg" "$path"
 elif [ "$multiple" = "1" ]; then
-	set -- -selection-path "$out" "$default_dir"
+	set -- -selection-path "$out" -last-dir-path="$last_selected_path_cfg" "$path"
 else
-	set -- -selection-path "$out" "$default_dir"
+	set -- -selection-path "$out" -last-dir-path="$last_selected_path_cfg" "$path"
 fi
 $termcmd $cmd "$@"
-if [ "$save" = "1" ] && [ ! -s "$out" ]; then
-	/usr/bin/rm "$path"
+
+# Save the last selected path for the next time, only upload files from a directory operation is need
+# because `--cwd-file` will do the same thing for files(s) upload and download operations
+if [ "$save" = "0" ] && [ "$directory" = "1" ]; then
+	head -n 1 <"$last_selected_path_cfg" >"$out"
+fi
+
+# case save file
+if [ "$save" = "1" ] && [ -s "$tmpfile" ]; then
+	selected_file=$(/usr/bin/head -n 1 "$tmpfile")
+	# Check if selected file is placeholder file
+	if [ -f "$selected_file" ] && /usr/bin/grep -qi "^xdg-desktop-portal-termfilechooser saving files tutorial" "$selected_file"; then
+		/usr/bin/cat "$tmpfile" >"$out"
+	fi
 fi
