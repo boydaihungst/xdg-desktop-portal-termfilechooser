@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <wordexp.h>
 
 #define PATH_PREFIX "file://"
 #define PATH_PORTAL "/tmp/termfilechooser.portal"
@@ -20,7 +21,16 @@ static int exec_filechooser(void *data, bool writing, bool multiple,
                             bool directory, char *path, char ***selected_files,
                             size_t *num_selected_files) {
   struct xdpw_state *state = data;
-  char *cmd_script = state->config->filechooser_conf.cmd;
+
+  // Expand environment variables in cmd_script
+  wordexp_t p;
+  if (wordexp(state->config->filechooser_conf.cmd, &p, 0) != 0) {
+    logprint(ERROR, "Failed to expand command script path");
+    return -1;
+  }
+  char *cmd_script = strdup(p.we_wordv[0]);
+  wordfree(&p);
+
   if (!cmd_script) {
     logprint(ERROR, "cmd not specified");
     return -1;
@@ -30,13 +40,24 @@ static int exec_filechooser(void *data, bool writing, bool multiple,
     path = "";
   }
 
-  size_t str_size = snprintf(NULL, 0, "%s %d %d %d \"%s\" \"%s\"", cmd_script,
-                             multiple, directory, writing, path, PATH_PORTAL) +
-                    1;
-  char *cmd = malloc(str_size);
-  snprintf(cmd, str_size, "%s %d %d %d \"%s\" \"%s\"", cmd_script, multiple,
-           directory, writing, path, PATH_PORTAL);
-
+  // Split the command into an array of arguments
+  char *args[7];
+  args[0] = cmd_script;
+  args[1] = multiple ? "1" : "0";
+  args[2] = directory ? "1" : "0";
+  args[3] = writing ? "1" : "0";
+  args[4] = path;
+  args[5] = PATH_PORTAL;
+  args[6] = NULL;
+  logprint(DEBUG, "Command script path: %s", cmd_script);
+  if (access(cmd_script, F_OK) != 0) {
+    logprint(ERROR, "Command script does not exist: %s", cmd_script);
+    return -1;
+  }
+  if (access(cmd_script, X_OK) != 0) {
+    logprint(ERROR, "Command script is not executable: %s", cmd_script);
+    return -1;
+  }
   // Check if the portal file exists and have read write permission
   if (access(PATH_PORTAL, F_OK) == 0) {
     if (access(PATH_PORTAL, R_OK | W_OK) != 0) {
@@ -48,14 +69,25 @@ static int exec_filechooser(void *data, bool writing, bool multiple,
     }
   }
   remove(PATH_PORTAL);
-  logprint(TRACE, "executing command: %s", cmd);
-  int ret = system(cmd);
-  if (ret) {
-    logprint(ERROR, "could not execute %s: %d", cmd, errno);
-    free(cmd);
+
+  pid_t pid = fork();
+  if (pid == -1) {
+    logprint(ERROR, "fork failed: %d", strerror(errno));
     return -1;
+  } else if (pid == 0) {
+    // Child process
+    execvp(cmd_script, args);
+    logprint(ERROR, "execvp failed: %s", strerror(errno));
+    _exit(EXIT_FAILURE);
+  } else {
+    // Parent process
+    int status;
+    waitpid(pid, &status, 0);
+    if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
+      logprint(ERROR, "command failed with status %d", WEXITSTATUS(status));
+      return -1;
+    }
   }
-  free(cmd);
 
   FILE *fp = fopen(PATH_PORTAL, "r");
   if (fp == NULL) {
@@ -71,6 +103,7 @@ static int exec_filechooser(void *data, bool writing, bool multiple,
       num_lines++;
     }
     if (ferror(fp)) {
+      fclose(fp);
       return 1;
     }
   } while (cr != EOF);
@@ -93,6 +126,7 @@ static int exec_filechooser(void *data, bool writing, bool multiple,
         free((*selected_files)[j]);
       }
       free(*selected_files);
+      fclose(fp);
       return 1;
     }
     size_t str_size = nread + strlen(PATH_PREFIX) + 1;
