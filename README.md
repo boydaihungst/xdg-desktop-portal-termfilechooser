@@ -21,6 +21,13 @@
 By default, it will use the [yazi](https://github.com/sxyazi/yazi) file manager, but this is customizable.
 Based on [xdg-desktop-portal-wlr] (xdpw).
 
+## Have problem with download > "open in folder" in firefox, chrome doesn't horver over downloaded file, or didn't load theme?
+
+If so, check out this file manager dbus service, check the preview section you will know what it does:
+https://github.com/boydaihungst/org.freedesktop.FileManager1.common
+
+`xdg-desktop-portal-termfilechooser` + `org.freedesktop.FileManager1.common make` you will have the same experience like in macos/windows.
+
 ## Deprecated
 
 Please use one of these forked repos for latest fixes.
