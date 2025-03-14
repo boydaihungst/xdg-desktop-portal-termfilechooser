@@ -29,41 +29,26 @@ path="$4"
 out="$5"
 cmd="/usr/bin/ranger"
 # "wezterm start --always-new-process" if you use wezterm
-termcmd="${TERMCMD:-/usr/bin/kitty --title termfilechooser}"
+if [ "$save" = "1" ]; then
+	TITLE="Save File:"
+elif [ "$directory" = "1" ]; then
+	TITLE="Select Directory:"
+else
+	TITLE="Select File:"
+fi
+
+termcmd="${TERMCMD:-/usr/bin/kitty}"
 
 cleanup() {
 	if [ -f "$tmpfile" ]; then
-		/usr/bin/rm -f "$tmpfile" || :
+		/usr/bin/rm "$tmpfile" || :
 	fi
-	if [ "$save" = "1" ] && [ ! -s "$out" ] && [ -f "$path" ]; then
+	if [ "$save" = "1" ] && [ ! -s "$out" ]; then
 		/usr/bin/rm "$path" || :
 	fi
 }
 
 trap cleanup EXIT HUP INT QUIT ABRT TERM
-
-# change this to "/tmp/xxxxxxx/.last_selected" if you only want to save last selected location
-# in session (flushed after reset device)
-last_selected_path_cfg="${XDG_STATE_HOME:-$HOME/.local/state}/xdg-desktop-portal-termfilechooser/last_selected"
-/usr/bin/mkdir -p "$(/usr/bin/dirname "$last_selected_path_cfg")"
-if [ ! -f "$last_selected_path_cfg" ]; then
-	/usr/bin/touch "$last_selected_path_cfg"
-fi
-last_selected="$(/usr/bin/cat "$last_selected_path_cfg")"
-
-# Restore last selected path
-if [ -d "$last_selected" ]; then
-	save_to_file=""
-	if [ "$save" = "1" ]; then
-		save_to_file="$(/usr/bin/basename "$path")"
-		path="${last_selected}/${save_to_file}"
-	else
-		path="${last_selected}"
-	fi
-fi
-if [ -z "$path" ]; then
-	path="$HOME"
-fi
 
 if [ "$save" = "1" ]; then
 	tmpfile=$(/usr/bin/mktemp)
@@ -99,27 +84,14 @@ else
 	# upload only 1 file
 	set -- --choosefile="$out" --cmd="echo Select file (open file to select it)" "$path"
 fi
-$termcmd -- $cmd "$@"
+$termcmd --title "$TITLE" -- $cmd "$@"
 
 # case save file
 if [ "$save" = "1" ] && [ -s "$tmpfile" ]; then
 	selected_file=$(/usr/bin/head -n 1 "$tmpfile")
 	# Check if selected file is placeholder file
 	if [ -f "$selected_file" ] && /usr/bin/grep -qi "^xdg-desktop-portal-termfilechooser saving files tutorial" "$selected_file"; then
-		/usr/bin/cat "$tmpfile" >"$out"
-	fi
-fi
-
-# Saving last selected directory, even when save = 1 and selected file isn't valid placeholder file.
-if [ -s "$tmpfile" ] || [ -s "$out" ]; then
-	if [ -s "$out" ]; then
-		selected_path=$(head -n 1 <"$out")
-	elif [ -s "$tmpfile" ]; then
-		selected_path=$(head -n 1 <"$tmpfile")
-	fi
-	if [ -d "$selected_path" ]; then
-		echo "$selected_path" >"$last_selected_path_cfg"
-	elif [ -f "$selected_path" ]; then
-		dirname "$selected_path" >"$last_selected_path_cfg"
+		/usr/bin/echo "$selected_file" >"$out"
+		path="$selected_file"
 	fi
 fi

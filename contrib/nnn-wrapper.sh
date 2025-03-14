@@ -6,14 +6,11 @@ set -x
 # See `ranger-wrapper.sh` for the description of the input arguments and the output format.
 
 cleanup() {
-    if [ "$save" = "1" ] && [ ! -s "$out" ] && [ -f "$path" ]; then
-        /usr/bin/rm "$path" || :
-    fi
     if [ -f "$tmpfile" ]; then
-        /usr/bin/rm -f "$tmpfile" || :
+        /usr/bin/rm "$tmpfile" || :
     fi
-    if [ -f "$TMPFILE_SELECTED_DIR" ]; then
-        /usr/bin/rm -f "$TMPFILE_SELECTED_DIR" || :
+    if [ "$save" = "1" ] && [ ! -s "$out" ]; then
+        /usr/bin/rm "$path" || :
     fi
 }
 trap cleanup EXIT HUP INT QUIT ABRT TERM
@@ -23,11 +20,16 @@ directory="$2"
 save="$3"
 path="$4"
 out="$5"
-# termcmd="x-terminal-emulator -e"
-termcmd="${TERMCMD:-/usr/bin/kitty --title termfilechooser}"
 cmd="/usr/bin/nnn"
-# -S [-s <session_file_name>] saves the last visited dir location and opens it on next startup
+if [ "$save" = "1" ]; then
+    TITLE="Save File:"
+elif [ "$directory" = "1" ]; then
+    TITLE="Select Directory:"
+else
+    TITLE="Select File:"
+fi
 
+termcmd="${TERMCMD:-/usr/bin/kitty}"
 # See also: https://github.com/jarun/nnn/wiki/Basic-use-cases#file-picker
 
 # nnn has no equivalent of ranger's:
@@ -37,32 +39,6 @@ cmd="/usr/bin/nnn"
 # `--show-only-dirs`
 # `--choosedir`
 # - To select then upload all files in a folder: Go inside of the folder then quit.
-
-# Even though nnn has session manager. We still use our own method to save last_selected file/folder.
-# Because nnn select tmpfile (to strict only select "placeholder" file, when save = 1), which will save tmpfile path to session,
-# instead of real selected file/folder.
-# change this to "/tmp/xxxxxxx/.last_selected" if you only want to save last selected location
-# in session (flushed after reset device)
-last_selected_path_cfg="${XDG_STATE_HOME:-$HOME/.local/state}/xdg-desktop-portal-termfilechooser/last_selected"
-/usr/bin/mkdir -p "$(/usr/bin/dirname "$last_selected_path_cfg")"
-if [ ! -f "$last_selected_path_cfg" ]; then
-    /usr/bin/touch "$last_selected_path_cfg"
-fi
-last_selected="$(/usr/bin/cat "$last_selected_path_cfg")"
-
-# Restore last selected path
-if [ -d "$last_selected" ]; then
-    save_to_file=""
-    if [ "$save" = "1" ]; then
-        save_to_file="$(/usr/bin/basename "$path")"
-        path="${last_selected}/${save_to_file}"
-    else
-        path="${last_selected}"
-    fi
-fi
-if [ -z "$path" ]; then
-    path="$HOME"
-fi
 
 if [ "$save" = "1" ]; then
     tmpfile=$(/usr/bin/mktemp)
@@ -91,50 +67,34 @@ Notes:
     # -a create new FIFO, -P to show preview if they exist
     # Ref: https://github.com/jarun/nnn/wiki/Live-previews
     set -- -p "$tmpfile" "$path"
+elif [ "$directory" = "1" ]; then
+    # data will has the format: `cd '/absolute/path/to/folder'`
+    tmpfile=$(/usr/bin/mktemp)
+    set -- "$path"
 else
     set -- -p "$out" "$path"
 fi
 
-command="$termcmd -- $cmd"
-for arg in "$@"; do
-    # escape double quotes
-    escaped=$(/usr/bin/printf "%s" "$arg" | /usr/bin/sed 's/"/\\"/g')
-    # escape spaces
-    command="$command \"$escaped\""
-done
 if [ "$directory" = "1" ]; then
-    # data will be `cd "/dir/path"`
-    TMPFILE_SELECTED_DIR=$(/usr/bin/mktemp)
-    /usr/bin/env NNN_TMPFILE="$TMPFILE_SELECTED_DIR" /usr/bin/sh -c "$command"
-    if [ "$directory" = "1" ] && [ -f "$TMPFILE_SELECTED_DIR" ]; then
-        LAST_SELECTED_DIR=$(cat "$TMPFILE_SELECTED_DIR")
-        LAST_SELECTED_DIR="${LAST_SELECTED_DIR#cd \'}"
-        LAST_SELECTED_DIR="${LAST_SELECTED_DIR%\'}"
-        /usr/bin/echo "$LAST_SELECTED_DIR" >"$out"
-    fi
+    /usr/bin/env NNN_TMPFILE="$tmpfile" $termcmd --title "$TITLE" -- $cmd "$@"
 else
-    /usr/bin/sh -c "$command"
+    $termcmd --title "$TITLE" -- $cmd "$@"
 fi
 
-# Moving selected file from $tmpfile to $out if selected file is valid placeholder file.
+if [ "$directory" = "1" ] && [ -s "$tmpfile" ]; then
+    # convert from `cd '/absolute/path/to/folder'` to `/absolute/path/to/folder`
+    selected_dir=$(/usr/bin/head -n 1 "$tmpfile")
+    selected_dir="${selected_dir#cd \'}"
+    selected_dir="${selected_dir%\'}"
+    /usr/bin/echo "$selected_dir" >"$out"
+fi
+
+# case save file
 if [ "$save" = "1" ] && [ -s "$tmpfile" ]; then
     selected_file=$(/usr/bin/head -n 1 "$tmpfile")
     # Check if selected file is placeholder file
     if [ -f "$selected_file" ] && /usr/bin/grep -qi "^xdg-desktop-portal-termfilechooser saving files tutorial" "$selected_file"; then
-        /usr/bin/cat "$tmpfile" >"$out"
-    fi
-fi
-
-# Saving last selected directory, even when save = 1 and selected file isn't valid placeholder file.
-if [ -s "$tmpfile" ] || [ -s "$out" ]; then
-    if [ -s "$out" ]; then
-        selected_path=$(head -n 1 <"$out")
-    elif [ -s "$tmpfile" ]; then
-        selected_path=$(head -n 1 <"$tmpfile")
-    fi
-    if [ -d "$selected_path" ]; then
-        echo "$selected_path" >"$last_selected_path_cfg"
-    elif [ -f "$selected_path" ]; then
-        dirname "$selected_path" >"$last_selected_path_cfg"
+        /usr/bin/echo "$selected_file" >"$out"
+        path="$selected_file"
     fi
 fi

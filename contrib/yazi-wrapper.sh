@@ -29,41 +29,26 @@ path="$4"
 out="$5"
 cmd="/usr/bin/yazi"
 # "wezterm start --always-new-process" if you use wezterm
-termcmd="${TERMCMD:-/usr/bin/kitty --title termfilechooser}"
+if [ "$save" = "1" ]; then
+  TITLE="Save File:"
+elif [ "$directory" = "1" ]; then
+  TITLE="Select Directory:"
+else
+  TITLE="Select File:"
+fi
+
+termcmd="${TERMCMD:-/usr/bin/kitty}"
 
 cleanup() {
   if [ -f "$tmpfile" ]; then
-    /usr/bin/rm -f "$tmpfile" || :
+    /usr/bin/rm "$tmpfile" || :
   fi
-  if [ "$save" = "1" ] && [ ! -s "$out" ] && [ -f "$path" ]; then
+  if [ "$save" = "1" ] && [ ! -s "$out" ]; then
     /usr/bin/rm "$path" || :
   fi
 }
 
 trap cleanup EXIT HUP INT QUIT ABRT TERM
-
-# change this to "/tmp/xxxxxxx/.last_selected" if you only want to save last selected location
-# in session (flushed after reset device)
-last_selected_path_cfg="${XDG_STATE_HOME:-$HOME/.local/state}/xdg-desktop-portal-termfilechooser/last_selected"
-/usr/bin/mkdir -p "$(/usr/bin/dirname "$last_selected_path_cfg")"
-if [ ! -f "$last_selected_path_cfg" ]; then
-  /usr/bin/touch "$last_selected_path_cfg"
-fi
-last_selected="$(/usr/bin/cat "$last_selected_path_cfg")"
-
-# Restore last selected path
-if [ -d "$last_selected" ]; then
-  save_to_file=""
-  if [ "$save" = "1" ]; then
-    save_to_file="$(/usr/bin/basename "$path")"
-    path="${last_selected}/${save_to_file}"
-  else
-    path="${last_selected}"
-  fi
-fi
-if [ -z "$path" ]; then
-  path="$HOME"
-fi
 
 if [ "$save" = "1" ]; then
   tmpfile=$(/usr/bin/mktemp)
@@ -89,41 +74,29 @@ Notes:
 2) If you quit yazi without opening a file, this file
    will be removed and the save operation aborted.
 ' >"$path"
-  set -- --chooser-file="$tmpfile" --cwd-file="$last_selected_path_cfg" "$path"
+  set -- --chooser-file="$tmpfile" "$path"
 elif [ "$directory" = "1" ]; then
   # upload files from a directory
   # Use this if you want to select folder by 'quit' function in yazi.
-  set -- --cwd-file="$last_selected_path_cfg" "$path"
+  set -- --cwd-file="$out" "$path"
   # NOTE: Use this if you want to select folder by enter a.k.a yazi keybind for 'open' funtion ('run = "open") .
-  # set -- --chooser-file="$out" --cwd-file="$last_selected_path_cfg" "$path"
+  # set -- --chooser-file="$out" "$path"
 elif [ "$multiple" = "1" ]; then
   # upload multiple files
-  set -- --chooser-file="$out" --cwd-file="$last_selected_path_cfg" "$path"
+  set -- --chooser-file="$out" "$path"
 else
   # upload only 1 file
-  set -- --chooser-file="$out" --cwd-file="$last_selected_path_cfg" "$path"
+  set -- --chooser-file="$out" "$path"
 fi
 
-command="$termcmd $cmd"
-for arg in "$@"; do
-  # escape double quotes
-  escaped=$(/usr/bin/printf "%s" "$arg" | /usr/bin/sed 's/"/\\"/g')
-  # escape spaces
-  command="$command \"$escaped\""
-done
-/usr/bin/sh -c "$command"
+$termcmd --title "$TITLE" -- $cmd "$@"
 
 # case save file
 if [ "$save" = "1" ] && [ -s "$tmpfile" ]; then
   selected_file=$(/usr/bin/head -n 1 "$tmpfile")
   # Check if selected file is placeholder file
   if [ -f "$selected_file" ] && /usr/bin/grep -qi "^xdg-desktop-portal-termfilechooser saving files tutorial" "$selected_file"; then
-    /usr/bin/cat "$tmpfile" >"$out"
+    /usr/bin/echo "$selected_file" >"$out"
+    path="$selected_file"
   fi
-fi
-
-# Save the last selected path for the next time, only upload files from a directory operation is need
-# because `--cwd-file` will do the same thing for files(s) upload and download operations
-if [ "$directory" = "1" ]; then
-  head -n 1 <"$last_selected_path_cfg" >"$out"
 fi
