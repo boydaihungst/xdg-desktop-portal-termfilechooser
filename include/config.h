@@ -6,7 +6,6 @@
 struct config_filechooser {
   char *cmd;
   char *default_dir;
-  char *cmd_filemanager;
 };
 
 struct xdpw_config {

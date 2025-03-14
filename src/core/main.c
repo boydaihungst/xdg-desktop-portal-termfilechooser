@@ -12,6 +12,10 @@ enum event_loop_fd {
   EVENT_LOOP_DBUS,
 };
 
+static volatile bool keep_running = true;
+
+void handle_sigterm(int sig) { keep_running = false; }
+
 static const char service_name[] =
     "org.freedesktop.impl.portal.desktop.termfilechooser";
 
@@ -42,6 +46,9 @@ static int handle_name_lost(sd_bus_message *m, void *userdata,
 }
 
 int main(int argc, char *argv[]) {
+  signal(SIGTERM, handle_sigterm);
+  signal(SIGINT, handle_sigterm);
+
   struct xdpw_config config = {};
   char *configfile = NULL;
   enum LOGLEVEL loglevel = DEFAULT_LOGLEVEL;
@@ -85,6 +92,7 @@ int main(int argc, char *argv[]) {
   int ret = 0;
 
   sd_bus *bus = NULL;
+  sd_bus_slot *slot = NULL;
   ret = sd_bus_open_user(&bus);
   if (ret < 0) {
     logprint(ERROR, "dbus: failed to connect to user bus: %s", strerror(-ret));
@@ -128,7 +136,6 @@ int main(int argc, char *argv[]) {
            "arg1='%s'",
            service_name, unique_name);
 
-  sd_bus_slot *slot;
   ret = sd_bus_add_match(bus, &slot, match, handle_name_lost, NULL);
   if (ret < 0) {
     logprint(ERROR, "dbus: failed to add NameOwnerChanged signal match: %s",
@@ -136,43 +143,34 @@ int main(int argc, char *argv[]) {
     goto error;
   }
 
-  struct pollfd pollfds[] = {
-      [EVENT_LOOP_DBUS] =
-          {
-              .fd = sd_bus_get_fd(state.bus),
-              .events = POLLIN,
-          },
-  };
-
-  while (1) {
-    ret = poll(pollfds, sizeof(pollfds) / sizeof(pollfds[0]), -1);
+  while (keep_running) {
+    ret = sd_bus_process(state.bus, NULL);
     if (ret < 0) {
-      logprint(ERROR, "poll failed: %s", strerror(errno));
-      goto error;
+      logprint(ERROR, "sd_bus_process failed: %s", strerror(-ret));
+      break;
     }
 
-    if (pollfds[EVENT_LOOP_DBUS].revents & POLLIN) {
-      logprint(TRACE, "event-loop: got dbus event");
-      do {
-        ret = sd_bus_process(state.bus, NULL);
-      } while (ret > 0);
-      if (ret < 0) {
-        logprint(ERROR, "sd_bus_process failed: %s", strerror(-ret));
-        goto error;
-      }
+    if (ret > 0)
+      continue;
+
+    ret = sd_bus_wait(state.bus, (uint64_t)-1);
+    if (ret < 0) {
+      logprint(ERROR, "Failed to wait: %s\n", strerror(-ret));
+      break;
     }
 
     logprint(TRACE, "flushing bus\n");
     sd_bus_flush(state.bus);
   }
 
-  // TODO: cleanup
   finish_config(&config);
   free(configfile);
 
   return EXIT_SUCCESS;
 
 error:
+  sd_bus_slot_unref(slot);
   sd_bus_unref(bus);
+  finish_config(&config);
   return EXIT_FAILURE;
 }

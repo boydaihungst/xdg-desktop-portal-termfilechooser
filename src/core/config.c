@@ -7,10 +7,21 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <wordexp.h>
 
 #define FILECHOOSER_DEFAULT_CMD                                                \
   "/usr/share/xdg-desktop-portal-termfilechooser/ranger-wrapper.sh"
-#define FILECHOOSER_DEFAULT_DIR "/tmp"
+#define FILECHOOSER_DEFAULT_DIR "$HOME"
+
+static char *expand_env(const char *input) {
+  wordexp_t p;
+  if (wordexp(input, &p, 0) != 0) {
+    return strdup(input); // Return original if expansion fails
+  }
+  char *expanded = strdup(p.we_wordv[0]);
+  wordfree(&p);
+  return expanded;
+}
 
 void print_config(enum LOGLEVEL loglevel, struct xdpw_config *config) {
   logprint(loglevel, "config: cmd:  %s", config->filechooser_conf.cmd);
@@ -33,7 +44,9 @@ static void parse_string(char **dest, const char *value) {
     return;
   }
   free(*dest);
-  *dest = strdup(value);
+  char *expanded_cmd = expand_env(value);
+  *dest = strdup(expanded_cmd);
+  free(expanded_cmd);
 }
 
 static int handle_ini_filechooser(struct config_filechooser *filechooser_conf,
@@ -64,13 +77,13 @@ static int handle_ini_config(void *data, const char *section, const char *key,
 }
 
 static void default_config(struct xdpw_config *config) {
-  size_t size = snprintf(NULL, 0, "%s", FILECHOOSER_DEFAULT_CMD) + 1;
-  config->filechooser_conf.cmd = malloc(size);
-  snprintf(config->filechooser_conf.cmd, size, "%s", FILECHOOSER_DEFAULT_CMD);
-  size = snprintf(NULL, 0, "%s", FILECHOOSER_DEFAULT_DIR) + 1;
-  config->filechooser_conf.default_dir = malloc(size);
-  snprintf(config->filechooser_conf.default_dir, size, "%s",
-           FILECHOOSER_DEFAULT_DIR);
+  char *expanded_cmd = expand_env(FILECHOOSER_DEFAULT_CMD);
+  config->filechooser_conf.cmd = strdup(expanded_cmd);
+  free(expanded_cmd);
+
+  char *expanded_dir = expand_env(FILECHOOSER_DEFAULT_DIR);
+  config->filechooser_conf.default_dir = strdup(expanded_dir);
+  free(expanded_dir);
 }
 
 static bool file_exists(const char *path) {

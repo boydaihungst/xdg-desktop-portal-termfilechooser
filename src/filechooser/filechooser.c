@@ -9,7 +9,6 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <wordexp.h>
 
 #define PATH_PREFIX "file://"
 #define PATH_PORTAL "/tmp/termfilechooser.portal"
@@ -22,14 +21,7 @@ static int exec_filechooser(void *data, bool writing, bool multiple,
                             size_t *num_selected_files) {
   struct xdpw_state *state = data;
 
-  // Expand environment variables in cmd_script
-  wordexp_t p;
-  if (wordexp(state->config->filechooser_conf.cmd, &p, 0) != 0) {
-    logprint(ERROR, "Failed to expand command script path");
-    return -1;
-  }
-  char *cmd_script = strdup(p.we_wordv[0]);
-  wordfree(&p);
+  char *cmd_script = state->config->filechooser_conf.cmd;
 
   if (!cmd_script) {
     logprint(ERROR, "cmd not specified");
@@ -161,6 +153,8 @@ static int method_open_file(sd_bus_message *msg, void *data,
   char *key;
   int inner_ret = 0;
   int multiple = 0, directory = 0;
+  char *current_folder = NULL;
+
   while ((ret = sd_bus_message_enter_container(msg, 'e', "sv")) > 0) {
     inner_ret = sd_bus_message_read(msg, "s", &key);
     if (inner_ret < 0) {
@@ -178,6 +172,24 @@ static int method_open_file(sd_bus_message *msg, void *data,
     } else if (strcmp(key, "directory") == 0) {
       sd_bus_message_read(msg, "v", "b", &directory);
       logprint(DEBUG, "dbus: option directory: %d", directory);
+    } else if (strcmp(key, "current_folder") == 0) {
+      const void *p = NULL;
+      size_t sz = 0;
+      inner_ret = sd_bus_message_enter_container(msg, 'v', "ay");
+      if (inner_ret < 0) {
+        return inner_ret;
+      }
+      inner_ret = sd_bus_message_read_array(msg, 'y', &p, &sz);
+      if (inner_ret < 0) {
+        return inner_ret;
+      }
+      inner_ret = sd_bus_message_exit_container(msg);
+      if (inner_ret < 0) {
+        return inner_ret;
+      }
+
+      current_folder = (char *)p;
+      logprint(DEBUG, "dbus: option current_folder: %s", current_folder);
     } else {
       logprint(WARN, "dbus: unknown option %s", key);
       sd_bus_message_skip(msg, "v");
@@ -205,7 +217,17 @@ static int method_open_file(sd_bus_message *msg, void *data,
 
   char **selected_files = NULL;
   size_t num_selected_files = 0;
-  ret = exec_filechooser(data, false, multiple, directory, NULL,
+  if (current_folder == NULL) {
+    struct xdpw_state *state = data;
+    char *default_dir = state->config->filechooser_conf.default_dir;
+    if (!default_dir) {
+      logprint(ERROR, "default_dir not specified");
+      return -1;
+    }
+    current_folder = default_dir;
+  }
+
+  ret = exec_filechooser(data, false, multiple, directory, current_folder,
                          &selected_files, &num_selected_files);
   if (ret) {
     goto cleanup;
@@ -326,6 +348,22 @@ static int method_save_file(sd_bus_message *msg, void *data,
       }
       current_folder = (char *)p;
       logprint(DEBUG, "dbus: option current_folder: %s", current_folder);
+    } else if (strcmp(key, "current_file") == 0) {
+      // when saving an existing file
+      const void *p = NULL;
+      size_t sz = 0;
+      inner_ret = sd_bus_message_enter_container(msg, 'v', "ay");
+      if (inner_ret < 0) {
+        return inner_ret;
+      }
+      inner_ret = sd_bus_message_read_array(msg, 'y', &p, &sz);
+      if (inner_ret < 0) {
+        return inner_ret;
+      }
+      current_name = (char *)p;
+      logprint(DEBUG,
+               "dbus: option replace current_name with current_file : %s",
+               current_name);
     } else {
       logprint(WARN, "dbus: unknown option %s", key);
       sd_bus_message_skip(msg, "v");

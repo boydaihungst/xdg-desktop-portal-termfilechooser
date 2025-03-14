@@ -78,16 +78,27 @@ Example:
 export TERMCMD="wezterm start --always-new-process"
 ```
 
-- `$HOME/.config/xdg-desktop-portal-termfilechooser/config`
+- `$HOME/.config/xdg-desktop-portal-termfilechooser/config` or `$XDG_CONFIG_HOME/xdg-desktop-portal-termfilechooser/config`
   Use yazi wrapper instead of ranger wrapper:
 
-```conf
-[filechooser]
-cmd=/usr/local/share/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh
-default_dir=/tmp
-```
+      [filechooser]
+      cmd=/usr/local/share/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh
+      default_dir=$HOME
 
-`default_dir` is where holding unfinished file.
+  Use custom yazi wrapper instead of default wrapper:
+
+      [filechooser]
+      cmd=$HOME/.config/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh
+      default_dir=$HOME
+
+      or
+
+      [filechooser]
+      cmd=$XDG_CONFIG_HOME/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh
+      default_dir=$HOME
+
+`default_dir` is where the app, which triggers download/upload or select file/folder, suggested to save file.
+For example in firefox it's `$HOME`
 
 ### Disable the original file picker portal
 
@@ -118,6 +129,11 @@ Restart the portal service:
 ### Test
 
     GTK_USE_PORTAL=1  zenity --file-selection
+    GTK_USE_PORTAL=1  zenity --file-selection --directory
+    GTK_USE_PORTAL=1  zenity --file-selection  --multiple
+
+    Change `USER` to your `username`
+    GTK_USE_PORTAL=1  zenity --file-selection  --save  --filename='/home/USER/save_file_$.txt
 
 and additional options: `--multiple`, `--directory`, `--save`.
 
