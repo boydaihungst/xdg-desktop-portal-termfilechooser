@@ -21,36 +21,40 @@
 By default, it will use the [yazi](https://github.com/sxyazi/yazi) file manager, but this is customizable.
 Based on [xdg-desktop-portal-wlr] (xdpw).
 
-## Have problem with download > "open in folder" in firefox, chrome doesn't horver over downloaded file, or didn't load theme?
+### Have problem with "open in folder" in web browser download manager, which doesn't horver over downloaded file, or load file manager config?
 
-If so, check out this file manager dbus service, check the preview section you will know what it does:
+If so, check out this file manager dbus service, there is a the preview section to understand what it does:
 https://github.com/boydaihungst/org.freedesktop.FileManager1.common
 
-`xdg-desktop-portal-termfilechooser` + `org.freedesktop.FileManager1.common make` you will have the same experience like in macos/windows.
+`xdg-desktop-portal-termfilechooser` + `org.freedesktop.FileManager1.common` make you will have the same experience like in macos/windows.
 
-## Deprecated
-
-Please use one of these forked repos for latest fixes.
+## ~~Deprecated~~ Alternative:
 
 [https://github.com/hunkyburrito/xdg-desktop-portal-termfilechooser](https://github.com/hunkyburrito/xdg-desktop-portal-termfilechooser)
 
-[https://github.com/exquo/xdg-desktop-portal-termfilechooser](https://github.com/exquo/xdg-desktop-portal-termfilechooser)
-
 ## Installation
 
-### Dependencies
+### Build using package manager
 
-Install the required packages. On apt-based systems:
+For Arch:
+
+    yay -S xdg-desktop-portal-termfilechooser-boydaihungst-git
+
+### Build from source
+
+#### Dependencies
+
+On apt-based systems:
 
     sudo apt install xdg-desktop-portal build-essential ninja-build meson libinih-dev libsystemd-dev scdoc
 
-For Arch, see the dependencies in the [AUR package](https://aur.archlinux.org/packages/xdg-desktop-portal-termfilechooser-fix-for-lf-git#pkgdeps).
+For Arch, see the dependencies in the [AUR package](https://aur.archlinux.org/packages/xdg-desktop-portal-termfilechooser-boydaihungst-git#pkgdeps).
 
-### Download the source
+#### Download the source
 
     git clone https://github.com/boydaihungst/xdg-desktop-portal-termfilechooser
 
-### Build
+#### Build
 
     cd xdg-desktop-portal-termfilechooser
     meson build
@@ -61,7 +65,7 @@ On Debian, move the `termfilechooser.portal` file:
 
     sudo mv /usr/local/share/xdg-desktop-portal/portals/termfilechooser.portal /usr/share/xdg-desktop-portal/portals/
 
-### Config files
+## Configuration
 
 Copy the `config` and any of the wrapper scripts in `contrib` dir to `~/.config/xdg-desktop-portal-termfilechooser`. Edit the `config` file to set your preferred terminal emulator and file manager applications.
 
@@ -126,7 +130,7 @@ Restart the portal service:
 
     systemctl --user restart xdg-desktop-portal.service
 
-### Test
+## Test
 
     GTK_USE_PORTAL=1  zenity --file-selection
     GTK_USE_PORTAL=1  zenity --file-selection --directory
@@ -174,6 +178,12 @@ See `man 5 xdg-desktop-portal-termfilechooser`.
 
 MIT
 
-[xdg-desktop-portal]: https://github.com/flatpak/xdg-desktop-portal
-[xdg-desktop-portal-wlr]: https://github.com/emersion/xdg-desktop-portal-wlr
-[ranger]: https://ranger.github.io/
+[xdg-desktop-portal](https://github.com/flatpak/xdg-desktop-portal)
+[original author: GermainZ](https://github.com/GermainZ/xdg-desktop-portal-termfilechooser)
+[xdg-desktop-portal-wlr](https://github.com/emersion/xdg-desktop-portal-wlr)
+[ranger](https://github.com/ranger/ranger/)
+[yazi](https://github.com/sxyazi/yazi/)
+[lf](https://github.com/gokcehan/lf)
+[fzf](https://github.com/junegunn/fzf)
+[nnn](https://github.com/jarun/nnn)
+[vifm](https://github.com/vifm/vifm)
