@@ -37,7 +37,12 @@ else
 	TITLE="Select File:"
 fi
 
-termcmd="${TERMCMD:-/usr/bin/kitty}"
+quote_string() {
+	local input="$1"
+	echo "'${input//\'/\'\\\'\'}'"
+}
+
+termcmd="${TERMCMD:-/usr/bin/kitty --title $(quote_string "$TITLE")}"
 
 cleanup() {
 	if [ -f "$tmpfile" ]; then
@@ -73,18 +78,18 @@ Notes:
 2) If you quit ranger without opening a file, this file
    will be removed and the save operation aborted.
 ' >"$path"
-	set -- --choosefile="$tmpfile" --cmd="echo Select save path (see tutorial in preview pane; try pressing zv or zp if no preview)" --selectfile="$path"
+	set -- --choosefile="$(quote_string "$tmpfile")" --cmd="$(quote_string "echo Select save path (see tutorial in preview pane; try pressing zv or zp if no preview)")" --selectfile="$(quote_string "$path")"
 elif [ "$directory" = "1" ]; then
 	# upload files from a directory
-	set -- --choosedir="$out" --show-only-dirs --cmd="echo Select directory (quit in dir to select it)" "$path"
+	set -- --choosedir="$(quote_string "$out")" --show-only-dirs --cmd="$(quote_string "echo Select directory (quit in dir to select it)")" "$(quote_string "$path")"
 elif [ "$multiple" = "1" ]; then
 	# upload multiple files
-	set -- --choosefiles="$out" --cmd="echo Select file(s) (open file to select it; <Space> to select multiple)" "$path"
+	set -- --choosefiles="$(quote_string "$out")" --cmd="$(quote_string "echo Select file(s) (open file to select it; <Space> to select multiple)")" "$(quote_string "$path")"
 else
 	# upload only 1 file
-	set -- --choosefile="$out" --cmd="echo Select file (open file to select it)" "$path"
+	set -- --choosefile="$(quote_string "$out")" --cmd="$(quote_string "echo Select file (open file to select it)")" "$(quote_string "$path")"
 fi
-$termcmd --title "$TITLE" -- $cmd "$@"
+eval "$termcmd -- $cmd $@"
 
 # case save file
 if [ "$save" = "1" ] && [ -s "$tmpfile" ]; then

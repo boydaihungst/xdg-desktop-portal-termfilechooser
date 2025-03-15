@@ -29,7 +29,12 @@ else
     TITLE="Select File:"
 fi
 
-termcmd="${TERMCMD:-/usr/bin/kitty}"
+quote_string() {
+    local input="$1"
+    echo "'${input//\'/\'\\\'\'}'"
+}
+
+termcmd="${TERMCMD:-/usr/bin/kitty --title $(quote_string "$TITLE")}"
 # See also: https://github.com/jarun/nnn/wiki/Basic-use-cases#file-picker
 
 # nnn has no equivalent of ranger's:
@@ -66,19 +71,19 @@ Notes:
 ' >"$path"
     # -a create new FIFO, -P to show preview if they exist
     # Ref: https://github.com/jarun/nnn/wiki/Live-previews
-    set -- -p "$tmpfile" "$path"
+    set -- -p "$(quote_string "$tmpfile")" "$(quote_string "$path")"
 elif [ "$directory" = "1" ]; then
     # data will has the format: `cd '/absolute/path/to/folder'`
     tmpfile=$(/usr/bin/mktemp)
-    set -- "$path"
+    set -- "$(quote_string "$path")"
 else
-    set -- -p "$out" "$path"
+    set -- -p "$(quote_string "$out")" "$(quote_string "$path")"
 fi
 
 if [ "$directory" = "1" ]; then
-    /usr/bin/env NNN_TMPFILE="$tmpfile" $termcmd --title "$TITLE" -- $cmd "$@"
+    NNN_TMPFILE="$tmpfile" eval "$termcmd -- $cmd $@"
 else
-    $termcmd --title "$TITLE" -- $cmd "$@"
+    eval "$termcmd -- $cmd $@"
 fi
 
 if [ "$directory" = "1" ] && [ -s "$tmpfile" ]; then

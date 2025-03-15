@@ -37,7 +37,12 @@ else
   TITLE="Select File:"
 fi
 
-termcmd="${TERMCMD:-/usr/bin/kitty}"
+quote_string() {
+  local input="$1"
+  echo "'${input//\'/\'\\\'\'}'"
+}
+
+termcmd="${TERMCMD:-/usr/bin/kitty --title $(quote_string "$TITLE")}"
 
 cleanup() {
   if [ -f "$tmpfile" ]; then
@@ -74,22 +79,22 @@ Notes:
 2) If you quit yazi without opening a file, this file
    will be removed and the save operation aborted.
 ' >"$path"
-  set -- --chooser-file="$tmpfile" "$path"
+  set -- --chooser-file="$(quote_string "$tmpfile")" "$(quote_string "$path")"
 elif [ "$directory" = "1" ]; then
   # upload files from a directory
   # Use this if you want to select folder by 'quit' function in yazi.
-  set -- --cwd-file="$out" "$path"
+  set -- --cwd-file="$(quote_string "$out")" "$(quote_string "$path")"
   # NOTE: Use this if you want to select folder by enter a.k.a yazi keybind for 'open' funtion ('run = "open") .
   # set -- --chooser-file="$out" "$path"
 elif [ "$multiple" = "1" ]; then
   # upload multiple files
-  set -- --chooser-file="$out" "$path"
+  set -- --chooser-file="$(quote_string "$out")" "$(quote_string "$path")"
 else
   # upload only 1 file
-  set -- --chooser-file="$out" "$path"
+  set -- --chooser-file="$(quote_string "$out")" "$(quote_string "$path")"
 fi
 
-$termcmd --title "$TITLE" -- $cmd "$@"
+eval "$termcmd -- $cmd $@"
 
 # case save file
 if [ "$save" = "1" ] && [ -s "$tmpfile" ]; then

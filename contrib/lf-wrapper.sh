@@ -34,7 +34,12 @@ else
 	TITLE="Select File:"
 fi
 
-termcmd="${TERMCMD:-/usr/bin/kitty}"
+quote_string() {
+	local input="$1"
+	echo "'${input//\'/\'\\\'\'}'"
+}
+
+termcmd="${TERMCMD:-/usr/bin/kitty --title $(quote_string "$TITLE")}"
 
 cleanup() {
 	if [ -f "$tmpfile" ]; then
@@ -68,15 +73,16 @@ Notes:
 2) If you quit ranger without opening a file, this file
    will be removed and the save operation aborted.
 ' >"$path"
-	set -- -selection-path "$tmpfile" "$path"
+	set -- -selection-path "$(quote_string "$tmpfile")" "$(quote_string "$path")"
 elif [ "$directory" = "1" ]; then
-	set -- -last-dir-path="$out" "$path"
+	set -- -last-dir-path "$(quote_string "$out")" "$(quote_string "$path")"
 elif [ "$multiple" = "1" ]; then
-	set -- -selection-path "$out" "$path"
+	set -- -selection-path "$(quote_string "$out")" "$(quote_string "$path")"
 else
-	set -- -selection-path "$out" "$path"
+	set -- -selection-path "$(quote_string "$out")" "$(quote_string "$path")"
 fi
-$termcmd --title "$TITLE" -- $cmd "$@"
+
+eval "$termcmd -- $cmd $@"
 
 # case save file
 if [ "$save" = "1" ] && [ -s "$tmpfile" ]; then
