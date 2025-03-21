@@ -102,7 +102,7 @@ export TERMCMD="wezterm start --always-new-process"
       default_dir=$HOME
 
 `default_dir` is where the app, which triggers download/upload or select file/folder, suggested to save file.
-For example in firefox it's `$HOME`
+For example in firefox it's `$HOME` the first time, after successfully selected/saved file, it will remember the last selected location. This location is suggested by the app (e.g. firefox), not by xdg-desktop-portal-termfilechooser itself.
 
 ### Disable the original file picker portal
 
