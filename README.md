@@ -1,4 +1,4 @@
-# xdg-desktop-portal-termfilechooser
+# xdg-desktop-portal-termfilechooser ~~Deprecated~~
 
 <!--toc:start-->
 
@@ -28,7 +28,7 @@ https://github.com/boydaihungst/org.freedesktop.FileManager1.common
 
 `xdg-desktop-portal-termfilechooser` + `org.freedesktop.FileManager1.common` make you will have the same experience like in macos/windows.
 
-## ~~Deprecated~~ Alternative:
+## Alternative:
 
 [https://github.com/hunkyburrito/xdg-desktop-portal-termfilechooser](https://github.com/hunkyburrito/xdg-desktop-portal-termfilechooser)
 
