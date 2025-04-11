@@ -81,24 +81,53 @@ static int exec_filechooser(void *data, bool writing, bool multiple,
     }
   }
 
-  FILE *fp = fopen(PATH_PORTAL, "r");
+  FILE *fp = fopen(PATH_PORTAL, "r+");
   if (fp == NULL) {
     logprint(ERROR, "failed to open " PATH_PORTAL);
     return -1;
   }
 
   size_t num_lines = 0;
-  char cr;
-  do {
-    cr = getc(fp);
+  int cr;
+
+  // NOTE: Some file manager like lf doesn't add newline at the end of file
+
+  // Go to the end to check size
+  if (fseek(fp, 0, SEEK_END) != 0) {
+    fclose(fp);
+    return -1;
+  }
+
+  long size = ftell(fp);
+  if (size == 0) {
+    // Empty file, do nothing
+    fclose(fp);
+    return 0;
+  }
+
+  // Check last character
+  if (fseek(fp, -1, SEEK_END) != 0) {
+    fclose(fp);
+    return -1;
+  }
+
+  int last = fgetc(fp);
+  if (last != '\n') {
+    fseek(fp, 0, SEEK_END); // move to EOF again
+    fputc('\n', fp);        // append newline
+  }
+  fseek(fp, 0, SEEK_SET);
+
+  // Count lines
+  while ((cr = getc(fp)) != EOF) {
     if (cr == '\n') {
       num_lines++;
     }
-    if (ferror(fp)) {
-      fclose(fp);
-      return 1;
-    }
-  } while (cr != EOF);
+  }
+  if (ferror(fp)) {
+    fclose(fp);
+    return 1;
+  }
   rewind(fp);
 
   if (num_lines == 0) {
