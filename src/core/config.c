@@ -10,7 +10,7 @@
 #include <wordexp.h>
 
 #define FILECHOOSER_DEFAULT_CMD                                                \
-  "/usr/share/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh"
+  "/usr/local/share/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh"
 #define FILECHOOSER_DEFAULT_DIR "$HOME"
 
 static char *expand_env(const char *input) {

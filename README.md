@@ -57,7 +57,7 @@ For Arch, see the dependencies in the [AUR package](https://aur.archlinux.org/pa
 #### Build
 
     cd xdg-desktop-portal-termfilechooser
-    meson build
+    meson build --prefix=/usr/local
     ninja -C build
     ninja -C build install  # run with superuser privileges
 
@@ -111,8 +111,13 @@ If your xdg-desktop-portal version
     xdg-desktop-portal --version
     # If xdg-desktop-portal not on $PATH, try:
     /usr/libexec/xdg-desktop-portal --version
+
     # OR, if it says file not found
+    /usr/local/libexec/xdg-desktop-portal --version
+    # OR
     /usr/lib64/xdg-desktop-portal --version
+    # OR
+    /usr/local/lib64/xdg-desktop-portal --version
 
 is >= [`1.18.0`](https://github.com/flatpak/xdg-desktop-portal/releases/tag/1.18.0), then you can specify the portal for FileChooser in `~/.config/xdg-desktop-portal/portals.conf` file (see the [flatpak docs](https://flatpak.github.io/xdg-desktop-portal/docs/portals.conf.html) and [ArchWiki](https://wiki.archlinux.org/title/XDG_Desktop_Portal#Configuration)):
 
@@ -121,7 +126,7 @@ is >= [`1.18.0`](https://github.com/flatpak/xdg-desktop-portal/releases/tag/1.18
 
 If your `xdg-desktop-portal --version` is older, you can remove `FileChooser` from `Interfaces` of the `{gtk;kde;…}.portal` files:
 
-    find /usr/share/xdg-desktop-portal/portals -name '*.portal' -not -name 'termfilechooser.portal' \
+    find /usr/local/share/xdg-desktop-portal/portals -name '*.portal' -not -name 'termfilechooser.portal' \
     	-exec grep -q 'FileChooser' '{}' \; \
     	-exec sudo sed -i'.bak' 's/org\.freedesktop\.impl\.portal\.FileChooser;\?//g' '{}' \;
 
@@ -156,6 +161,7 @@ and additional options: `--multiple`, `--directory`, `--save`.
 
       systemctl --user stop xdg-desktop-portal-termfilechooser.service
       /usr/lib64/xdg-desktop-portal-termfilechooser -l TRACE -r
+      /usr/local/lib64/xdg-desktop-portal-termfilechooser -l TRACE -r
 
   This way the output from the wrapper scripts (e.g. `ranger-wrapper.sh`) will be written to the same terminal. This is handy for using e.g. `set -x` in the scripts during debugging.
   When termfilechooser runs as a `systemd` service, its output can be viewer with `journalctl`.
