@@ -61,10 +61,6 @@ For Arch, see the dependencies in the [AUR package](https://aur.archlinux.org/pa
     ninja -C build
     ninja -C build install  # run with superuser privileges
 
-On Debian, move the `termfilechooser.portal` file:
-
-    sudo mv /usr/share/xdg-desktop-portal/portals/termfilechooser.portal /usr/share/xdg-desktop-portal/portals/
-
 ## Configuration
 
 Copy the `config` and any of the wrapper scripts in `contrib` dir to `~/.config/xdg-desktop-portal-termfilechooser`. Edit the `config` file to set your preferred terminal emulator and file manager applications.
