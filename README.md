@@ -57,20 +57,20 @@ For Arch, see the dependencies in the [AUR package](https://aur.archlinux.org/pa
 #### Build
 
     cd xdg-desktop-portal-termfilechooser
-    meson build --prefix=/usr/local
+    meson build --prefix=/usr
     ninja -C build
     ninja -C build install  # run with superuser privileges
 
 On Debian, move the `termfilechooser.portal` file:
 
-    sudo mv /usr/local/share/xdg-desktop-portal/portals/termfilechooser.portal /usr/share/xdg-desktop-portal/portals/
+    sudo mv /usr/share/xdg-desktop-portal/portals/termfilechooser.portal /usr/share/xdg-desktop-portal/portals/
 
 ## Configuration
 
 Copy the `config` and any of the wrapper scripts in `contrib` dir to `~/.config/xdg-desktop-portal-termfilechooser`. Edit the `config` file to set your preferred terminal emulator and file manager applications.
 
 For terminal emulator. You can set the `TERMCMD` environment variable instead of edit wrapper file. So you only need to copy `config`. By default wrappers
-is placed at `/usr/local/share/xdg-desktop-portal-termfilechooser/`
+is placed at `/usr/share/xdg-desktop-portal-termfilechooser/`
 
 Example:
 
@@ -86,7 +86,7 @@ export TERMCMD="wezterm start --always-new-process"
   Use yazi wrapper instead of ranger wrapper:
 
       [filechooser]
-      cmd=/usr/local/share/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh
+      cmd=/usr/share/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh
       default_dir=$HOME
 
   Use custom yazi wrapper instead of default wrapper:
@@ -113,11 +113,11 @@ If your xdg-desktop-portal version
     /usr/libexec/xdg-desktop-portal --version
 
     # OR, if it says file not found
-    /usr/local/libexec/xdg-desktop-portal --version
+    /usr/libexec/xdg-desktop-portal --version
     # OR
     /usr/lib64/xdg-desktop-portal --version
     # OR
-    /usr/local/lib64/xdg-desktop-portal --version
+    /usr/lib64/xdg-desktop-portal --version
 
 is >= [`1.18.0`](https://github.com/flatpak/xdg-desktop-portal/releases/tag/1.18.0), then you can specify the portal for FileChooser in `~/.config/xdg-desktop-portal/portals.conf` file (see the [flatpak docs](https://flatpak.github.io/xdg-desktop-portal/docs/portals.conf.html) and [ArchWiki](https://wiki.archlinux.org/title/XDG_Desktop_Portal#Configuration)):
 
@@ -126,7 +126,7 @@ is >= [`1.18.0`](https://github.com/flatpak/xdg-desktop-portal/releases/tag/1.18
 
 If your `xdg-desktop-portal --version` is older, you can remove `FileChooser` from `Interfaces` of the `{gtk;kde;…}.portal` files:
 
-    find /usr/local/share/xdg-desktop-portal/portals -name '*.portal' -not -name 'termfilechooser.portal' \
+    find /usr/share/xdg-desktop-portal/portals -name '*.portal' -not -name 'termfilechooser.portal' \
     	-exec grep -q 'FileChooser' '{}' \; \
     	-exec sudo sed -i'.bak' 's/org\.freedesktop\.impl\.portal\.FileChooser;\?//g' '{}' \;
 
@@ -155,13 +155,13 @@ and additional options: `--multiple`, `--directory`, `--save`.
 - The termfilechooser's executable can also be launched directly:
 
       systemctl --user stop xdg-desktop-portal-termfilechooser.service
-      /usr/local/libexec/xdg-desktop-portal-termfilechooser -l TRACE -r
+      /usr/libexec/xdg-desktop-portal-termfilechooser -l TRACE -r
 
   or, if it says file/folder not found:
 
       systemctl --user stop xdg-desktop-portal-termfilechooser.service
       /usr/lib64/xdg-desktop-portal-termfilechooser -l TRACE -r
-      /usr/local/lib64/xdg-desktop-portal-termfilechooser -l TRACE -r
+      /usr/lib64/xdg-desktop-portal-termfilechooser -l TRACE -r
 
   This way the output from the wrapper scripts (e.g. `ranger-wrapper.sh`) will be written to the same terminal. This is handy for using e.g. `set -x` in the scripts during debugging.
   When termfilechooser runs as a `systemd` service, its output can be viewer with `journalctl`.
