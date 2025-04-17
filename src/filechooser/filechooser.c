@@ -1,5 +1,6 @@
 #include "filechooser.h"
 #include "xdpw.h"
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdbool.h>
@@ -15,6 +16,28 @@
 
 static const char object_path[] = "/org/freedesktop/portal/desktop";
 static const char interface_name[] = "org.freedesktop.impl.portal.FileChooser";
+
+// Helper function to URL encode a string
+static char *url_encode(const char *s) {
+  const char *hex = "0123456789abcdef";
+  size_t len = strlen(s);
+  unsigned char *encoded =
+      malloc(len * 3 + 1); // Worst case: all chars need encoding
+  unsigned char *p = encoded;
+  for (size_t i = 0; i < len; i++) {
+    unsigned char c = s[i];
+    if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~' ||
+        c == '/') {
+      *p++ = c;
+    } else {
+      *p++ = '%';
+      *p++ = hex[c >> 4];
+      *p++ = hex[c & 15];
+    }
+  }
+  *p = '\0';
+  return (char *)encoded;
+}
 
 static int exec_filechooser(void *data, bool writing, bool multiple,
                             bool directory, char *path, char ***selected_files,
@@ -150,13 +173,16 @@ static int exec_filechooser(void *data, bool writing, bool multiple,
       fclose(fp);
       return 1;
     }
-    size_t str_size = nread + strlen(PATH_PREFIX) + 1;
-    if (line[nread - 1] == '\n') {
-      str_size -= 1;
+
+    if (nread > 0 && line[nread - 1] == '\n') {
+      line[nread - 1] = '\0';
     }
+    char *encoded_path = url_encode(line);
+    size_t str_size = strlen(PATH_PREFIX) + strlen(encoded_path) + 1;
     (*selected_files)[i] = malloc(str_size);
-    snprintf((*selected_files)[i], str_size, "%s%s", PATH_PREFIX, line);
+    snprintf((*selected_files)[i], str_size, "%s%s", PATH_PREFIX, encoded_path);
     free(line);
+    free(encoded_path);
   }
   (*selected_files)[num_lines] = NULL;
 
