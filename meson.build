@@ -17,7 +17,9 @@ add_project_arguments(cc.get_supported_arguments([
 ]), language: 'c')
 
 prefix = get_option('prefix')
+libexecdir = get_option('libexecdir')
 sysconfdir = get_option('sysconfdir')
+datadir = get_option('datadir')
 add_project_arguments('-DSYSCONFDIR="@0@"'.format(join_paths(prefix, sysconfdir)), language : 'c')
 
 inc = include_directories('include')
@@ -68,12 +70,12 @@ executable(
     ],
     include_directories: [inc],
     install: true,
-    install_dir: get_option('libexecdir'),
+    install_dir: libexecdir,
 )
 
 conf_data = configuration_data()
 conf_data.set('libexecdir',
-    join_paths(get_option('prefix'), get_option('libexecdir')))
+    join_paths(prefix, libexecdir))
 conf_data.set('systemd_service', '')
 
 systemd = dependency('systemd', required: get_option('systemd'))
@@ -81,7 +83,7 @@ systemd = dependency('systemd', required: get_option('systemd'))
 if systemd.found()
     systemd_service_file = 'xdg-desktop-portal-termfilechooser.service'
     user_unit_dir = systemd.get_pkgconfig_variable('systemduserunitdir',
-        define_variable: ['prefix', get_option('prefix')])
+        define_variable: ['prefix', prefix])
     conf_data.set('systemd_service', 'SystemdService=' + systemd_service_file)
 
     configure_file(
@@ -96,17 +98,17 @@ configure_file(
     configuration: conf_data,
     input: 'org.freedesktop.impl.portal.desktop.termfilechooser.service.in',
     output: '@BASENAME@',
-    install_dir: join_paths(get_option('datadir'), 'dbus-1', 'services'),
+    install_dir: join_paths(datadir, 'dbus-1', 'services'),
 )
 
 install_data(
     'termfilechooser.portal',
-    install_dir: join_paths(get_option('datadir'), 'xdg-desktop-portal', 'portals'),
+    install_dir: join_paths(datadir, 'xdg-desktop-portal', 'portals'),
 )
 
 install_subdir(
     'contrib',
-    install_dir: join_paths(get_option('datadir'), 'xdg-desktop-portal-termfilechooser'),
+    install_dir: join_paths(datadir, 'xdg-desktop-portal-termfilechooser'),
     strip_directory: true,
 )
 
