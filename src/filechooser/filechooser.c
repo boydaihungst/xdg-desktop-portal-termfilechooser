@@ -332,6 +332,7 @@ cleanup:
   }
   free(selected_files);
 
+  remove(PATH_PORTAL);
   return ret;
 }
 
@@ -521,6 +522,7 @@ cleanup:
   free(selected_files);
   free(path);
 
+  remove(PATH_PORTAL);
   return ret;
 }
 
