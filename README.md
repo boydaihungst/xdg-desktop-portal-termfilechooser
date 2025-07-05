@@ -1,34 +1,39 @@
-# xdg-desktop-portal-termfilechooser ~~Deprecated~~
+# xdg-desktop-portal-termfilechooser
 
 <!--toc:start-->
 
 - [xdg-desktop-portal-termfilechooser](#xdg-desktop-portal-termfilechooser)
+  - [Alternative](#alternative)
   - [Installation](#installation)
-    - [Dependencies](#dependencies)
-    - [Download the source](#download-the-source)
-    - [Build](#build)
-    - [Config files](#config-files)
+    - [Build using package manager](#build-using-package-manager)
+    - [Build from source](#build-from-source)
+      - [Dependencies](#dependencies)
+      - [Download the source](#download-the-source)
+      - [Build](#build)
+  - [Configuration](#configuration)
     - [Disable the original file picker portal](#disable-the-original-file-picker-portal)
     - [Systemd service](#systemd-service)
-    - [Test](#test)
-      - [Troubleshooting](#troubleshooting)
+  - [Test](#test)
+    - [Troubleshooting](#troubleshooting)
+  - [For developers](#for-developers)
   - [Usage](#usage)
   - [Documentation](#documentation)
   - [License](#license)
-      <!--toc:end-->
+  <!--toc:end-->
 
 [xdg-desktop-portal] backend for choosing files with your favorite file chooser.
 By default, it will use the [yazi](https://github.com/sxyazi/yazi) file manager, but this is customizable.
 Based on [xdg-desktop-portal-wlr] (xdpw).
 
-### Have problem with "open in folder" in web browser download manager, which doesn't horver over downloaded file, or load file manager config?
+### Having trouble with "Open in Folder" in your web browser’s download manager — where it doesn’t highlight the downloaded file or respect your file manager configuration?
 
-If so, check out this file manager dbus service, there is a the preview section to understand what it does:
+If so, check out this file manager D-Bus service. There's a preview section to help you understand what it does:
 https://github.com/boydaihungst/org.freedesktop.FileManager1.common
 
-`xdg-desktop-portal-termfilechooser` + `org.freedesktop.FileManager1.common` make you will have the same experience like in macos/windows.
+By combining `xdg-desktop-portal-termfilechooser` with `org.freedesktop.FileManager1.common`,
+you'll get a file-opening experience similar to macOS and Windows.
 
-## Alternative:
+## Alternative
 
 [https://github.com/hunkyburrito/xdg-desktop-portal-termfilechooser](https://github.com/hunkyburrito/xdg-desktop-portal-termfilechooser)
 
@@ -178,6 +183,11 @@ and additional options: `--multiple`, `--directory`, `--save`.
 - Since [this merge request in GNOME](https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/4829), `GTK_USE_PORTAL=1` seems to be replaced with `GDK_DEBUG=portals`.
 
 - See also: [Troubleshooting section in ArchWiki](https://wiki.archlinux.org/title/XDG_Desktop_Portal#Troubleshooting).
+
+## For developers
+
+- Stop service: `systemctl --user stop xdg-desktop-portal-termfilechooser.service`
+- Build and run in debug mode: `meson build --prefix=/usr --reconfigure && ninja -C build && ./build/xdg-desktop-portal-termfilechooser  -l TRACE -r`
 
 ## Usage
 
