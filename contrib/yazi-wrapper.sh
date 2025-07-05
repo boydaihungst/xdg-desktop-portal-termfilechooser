@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-set -x
+if [[ "$6" == "1" ]]; then
+  set -x
+fi
 
 # This wrapper script is invoked by xdg-desktop-portal-termfilechooser.
 #
@@ -16,6 +18,7 @@ set -x
 #    Note that if the path already exists, we keep appending "_" to it until we
 #    get a path that does not exist.
 # 5. The output path, to which results should be written.
+# 6. "1" if log level >= DEBUG, "0" otherwise.
 #
 # Output:
 # The script should print the selected paths to the output path (argument #5),

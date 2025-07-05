@@ -12,6 +12,8 @@ void init_logger(FILE *dst, enum LOGLEVEL level) {
   logprops.level = level;
 }
 
+enum LOGLEVEL get_logger_level(void) { return logprops.level; }
+
 enum LOGLEVEL get_loglevel(const char *level) {
   if (strcmp(level, "QUIET") == 0) {
     return QUIET;

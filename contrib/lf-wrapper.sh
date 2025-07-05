@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+if [[ "$6" == "1" ]]; then
+  set -x
+fi
 # This wrapper script is invoked by xdg-desktop-portal-termfilechooser.
 #
 # Inputs:
@@ -14,6 +17,7 @@
 #    Note that if the path already exists, we keep appending "_" to it until we
 #    get a path that does not exist.
 # 5. The output path, to which results should be written.
+# 6. "1" if log level >= DEBUG, "0" otherwise.
 #
 # Output:
 # The script should print the selected paths to the output path (argument #5),
@@ -27,34 +31,34 @@ path="$4"
 out="$5"
 cmd="/usr/bin/lf"
 if [ "$save" = "1" ]; then
-	TITLE="Save File:"
+  TITLE="Save File:"
 elif [ "$directory" = "1" ]; then
-	TITLE="Select Directory:"
+  TITLE="Select Directory:"
 else
-	TITLE="Select File:"
+  TITLE="Select File:"
 fi
 
 quote_string() {
-	local input="$1"
-	echo "'${input//\'/\'\\\'\'}'"
+  local input="$1"
+  echo "'${input//\'/\'\\\'\'}'"
 }
 
 termcmd="${TERMCMD:-/usr/bin/kitty --title $(quote_string "$TITLE")}"
 
 cleanup() {
-	if [ -f "$tmpfile" ]; then
-		/usr/bin/rm "$tmpfile" || :
-	fi
-	if [ "$save" = "1" ] && [ ! -s "$out" ]; then
-		/usr/bin/rm "$path" || : || n
-	fi
+  if [ -f "$tmpfile" ]; then
+    /usr/bin/rm "$tmpfile" || :
+  fi
+  if [ "$save" = "1" ] && [ ! -s "$out" ]; then
+    /usr/bin/rm "$path" || : || n
+  fi
 }
 
 trap cleanup EXIT HUP INT QUIT ABRT TERM
 
 if [ "$save" = "1" ]; then
-	tmpfile=$(/usr/bin/mktemp)
-	/usr/bin/printf '%s' 'xdg-desktop-portal-termfilechooser saving files tutorial
+  tmpfile=$(/usr/bin/mktemp)
+  /usr/bin/printf '%s' 'xdg-desktop-portal-termfilechooser saving files tutorial
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!                 === WARNING! ===                 !!!
@@ -73,23 +77,23 @@ Notes:
 2) If you quit ranger without opening a file, this file
    will be removed and the save operation aborted.
 ' >"$path"
-	set -- -selection-path "$(quote_string "$tmpfile")" "$(quote_string "$path")"
+  set -- -selection-path "$(quote_string "$tmpfile")" "$(quote_string "$path")"
 elif [ "$directory" = "1" ]; then
-	set -- -last-dir-path "$(quote_string "$out")" "$(quote_string "$path")"
+  set -- -last-dir-path "$(quote_string "$out")" "$(quote_string "$path")"
 elif [ "$multiple" = "1" ]; then
-	set -- -selection-path "$(quote_string "$out")" "$(quote_string "$path")"
+  set -- -selection-path "$(quote_string "$out")" "$(quote_string "$path")"
 else
-	set -- -selection-path "$(quote_string "$out")" "$(quote_string "$path")"
+  set -- -selection-path "$(quote_string "$out")" "$(quote_string "$path")"
 fi
 
 eval "$termcmd -- $cmd $@"
 
 # case save file
 if [ "$save" = "1" ] && [ -s "$tmpfile" ]; then
-	selected_file=$(/usr/bin/head -n 1 "$tmpfile")
-	# Check if selected file is placeholder file
-	if [ -f "$selected_file" ] && /usr/bin/grep -qi "^xdg-desktop-portal-termfilechooser saving files tutorial" "$selected_file"; then
-		/usr/bin/echo "$selected_file" >"$out"
-		path="$selected_file"
-	fi
+  selected_file=$(/usr/bin/head -n 1 "$tmpfile")
+  # Check if selected file is placeholder file
+  if [ -f "$selected_file" ] && /usr/bin/grep -qi "^xdg-desktop-portal-termfilechooser saving files tutorial" "$selected_file"; then
+    /usr/bin/echo "$selected_file" >"$out"
+    path="$selected_file"
+  fi
 fi

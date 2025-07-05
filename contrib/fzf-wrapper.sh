@@ -1,4 +1,9 @@
-#!/bin/sh
+#!/usr/bin/env bash
+
+if [[ "$6" == "1" ]]; then
+  set -x
+fi
+
 # This wrapper script is invoked by xdg-desktop-portal-termfilechooser.
 #
 # Inputs:
@@ -13,6 +18,7 @@
 #    Note that if the path already exists, we keep appending "_" to it until we
 #    get a path that does not exist.
 # 5. The output path, to which results should be written.
+# 6. "1" if log level >= DEBUG, "0" otherwise.
 #
 # Output:
 # The script should print the selected paths to the output path (argument #5),
@@ -28,13 +34,13 @@ out="$5"
 termcmd="${TERMCMD:-/usr/bin/kitty}"
 
 if [ "$save" = "1" ]; then
-    cmd="dialog --yesno \"Save to \"$path\"?\" 0 0 && ( printf '%s' \"$path\" > $out ) || ( printf '%s' 'Input path to write to: ' && read input && printf '%s' \"\$input\" > $out)"
+  cmd="dialog --yesno \"Save to \"$path\"?\" 0 0 && ( printf '%s' \"$path\" > $out ) || ( printf '%s' 'Input path to write to: ' && read input && printf '%s' \"\$input\" > $out)"
 elif [ "$directory" = "1" ]; then
-    cmd="fd -a --base-directory=$HOME -td | fzf +m --prompt 'Select directory > ' > $out"
+  cmd="fd -a --base-directory=$HOME -td | fzf +m --prompt 'Select directory > ' > $out"
 elif [ "$multiple" = "1" ]; then
-    cmd="fd -a --base-directory=$HOME | fzf -m --prompt 'Select files > ' > $out"
+  cmd="fd -a --base-directory=$HOME | fzf -m --prompt 'Select files > ' > $out"
 else
-    cmd="fd -a --base-directory=$HOME | fzf +m --prompt 'Select file > ' > $out"
+  cmd="fd -a --base-directory=$HOME | fzf +m --prompt 'Select file > ' > $out"
 fi
 
 "$termcmd" sh -c "$cmd"

@@ -56,14 +56,16 @@ static int exec_filechooser(void *data, bool writing, bool multiple,
   }
 
   // Split the command into an array of arguments
-  char *args[7];
+  char *args[8];
   args[0] = cmd_script;
   args[1] = multiple ? "1" : "0";
   args[2] = directory ? "1" : "0";
   args[3] = writing ? "1" : "0";
   args[4] = path;
   args[5] = PATH_PORTAL;
-  args[6] = NULL;
+  args[6] = get_logger_level() >= DEBUG ? "1" : "0";
+  args[7] = NULL;
+
   logprint(DEBUG, "Command script path: %s", cmd_script);
   if (access(cmd_script, F_OK) != 0) {
     logprint(ERROR, "Command script does not exist: %s", cmd_script);
