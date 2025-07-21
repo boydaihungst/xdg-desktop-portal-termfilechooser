@@ -109,7 +109,7 @@ static int exec_filechooser(void *data, bool writing, bool multiple,
   FILE *fp = fopen(PATH_PORTAL, "r+");
   if (fp == NULL) {
     logprint(DEBUG, "Aborted");
-    return 0;
+    return -1;
   }
 
   size_t num_lines = 0;
