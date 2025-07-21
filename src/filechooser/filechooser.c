@@ -51,30 +51,21 @@ static int exec_filechooser(void *data, bool writing, bool multiple,
     return -1;
   }
 
-  if (path == NULL) {
-    path = "";
-  }
-
-  // Split the command into an array of arguments
-  char *args[8];
-  args[0] = cmd_script;
-  args[1] = multiple ? "1" : "0";
-  args[2] = directory ? "1" : "0";
-  args[3] = writing ? "1" : "0";
-  args[4] = path;
-  args[5] = PATH_PORTAL;
-  args[6] = get_logger_level() >= DEBUG ? "1" : "0";
-  args[7] = NULL;
-
   logprint(DEBUG, "Command script path: %s", cmd_script);
-  if (access(cmd_script, F_OK) != 0) {
-    logprint(ERROR, "Command script does not exist: %s", cmd_script);
-    return -1;
-  }
   if (access(cmd_script, X_OK) != 0) {
     logprint(ERROR, "Command script is not executable: %s", cmd_script);
     return -1;
   }
+
+  const char *args[] = {cmd_script,
+                        multiple ? "1" : "0",
+                        directory ? "1" : "0",
+                        writing ? "1" : "0",
+                        path ? path : "",
+                        PATH_PORTAL,
+                        get_logger_level() >= DEBUG ? "1" : "0",
+                        NULL};
+
   // Check if the portal file exists and have read write permission
   if (access(PATH_PORTAL, F_OK) == 0) {
     if (access(PATH_PORTAL, R_OK | W_OK) != 0) {
@@ -93,7 +84,7 @@ static int exec_filechooser(void *data, bool writing, bool multiple,
     return -1;
   } else if (pid == 0) {
     // Child process
-    execvp(cmd_script, args);
+    execvp(cmd_script, (char *const *)args);
     logprint(ERROR, "execvp failed: %s", strerror(errno));
     _exit(EXIT_FAILURE);
   } else {
@@ -109,6 +100,8 @@ static int exec_filechooser(void *data, bool writing, bool multiple,
   FILE *fp = fopen(PATH_PORTAL, "r+");
   if (fp == NULL) {
     logprint(DEBUG, "Aborted");
+    *selected_files = NULL;
+    *num_selected_files = 0;
     return -1;
   }
 
@@ -120,6 +113,8 @@ static int exec_filechooser(void *data, bool writing, bool multiple,
   // Go to the end to check size
   if (fseek(fp, 0, SEEK_END) != 0) {
     fclose(fp);
+    *selected_files = NULL;
+    *num_selected_files = 0;
     return -1;
   }
 
@@ -133,6 +128,8 @@ static int exec_filechooser(void *data, bool writing, bool multiple,
   // Check last character
   if (fseek(fp, -1, SEEK_END) != 0) {
     fclose(fp);
+    *selected_files = NULL;
+    *num_selected_files = 0;
     return -1;
   }
 
@@ -151,6 +148,8 @@ static int exec_filechooser(void *data, bool writing, bool multiple,
   }
   if (ferror(fp)) {
     fclose(fp);
+    *selected_files = NULL;
+    *num_selected_files = 0;
     return 1;
   }
   rewind(fp);
@@ -161,6 +160,11 @@ static int exec_filechooser(void *data, bool writing, bool multiple,
 
   *num_selected_files = num_lines;
   *selected_files = malloc((num_lines + 1) * sizeof(char *));
+  if (*selected_files == NULL) {
+    fclose(fp);
+    *num_selected_files = 0;
+    return -1;
+  }
 
   for (size_t i = 0; i < num_lines; i++) {
     size_t n = 0;
@@ -168,11 +172,13 @@ static int exec_filechooser(void *data, bool writing, bool multiple,
     ssize_t nread = getline(&line, &n, fp);
     if (ferror(fp)) {
       free(line);
-      for (size_t j = 0; j < i - 1; j++) {
+      for (size_t j = 0; j < i; j++) {
         free((*selected_files)[j]);
       }
       free(*selected_files);
       fclose(fp);
+      *selected_files = NULL;
+      *num_selected_files = 0;
       return 1;
     }
 
