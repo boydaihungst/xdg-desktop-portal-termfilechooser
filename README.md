@@ -130,7 +130,7 @@ Example:
   default_dir=$HOME
   ```
 
-The `default_dir` is used in case where the app, which triggers download/upload or select file/folder, doesn't suggested location to save/open file/directory.
+The `default_dir` is used in case where the app, which triggers download/upload or select file/folder, doesn't suggested location to save/open file/directory or suggested a relative path to its CWD, which we can't access from dbus message.  
 For example in firefox it's `$HOME` the first time, after successfully selected/saved file, it will remember the last selected location.
 This location is suggested by the app (e.g. firefox), not by xdg-desktop-portal-termfilechooser itself. Normally, it remember the last selected location based on file extension.
 
@@ -227,6 +227,8 @@ and additional options: `--multiple`, `--directory`, `--save`.
 
 - Stop service: `systemctl --user stop xdg-desktop-portal-termfilechooser.service`
 - Build and run in debug mode: `meson build --prefix=/usr --reconfigure && ninja -C build && ./build/xdg-desktop-portal-termfilechooser  -l TRACE -r`
+- Monitor dbus message: `dbus-monitor --session "interface='org.freedesktop.portal.FileChooser'"`
+- Explain what the values from dbus message for: https://github.com/flatpak/xdg-desktop-portal/blob/main/data/org.freedesktop.portal.FileChooser.xml
 
 ## Usage
 
@@ -240,12 +242,12 @@ See `man 5 xdg-desktop-portal-termfilechooser`.
 
 MIT
 
-[xdg-desktop-portal](https://github.com/flatpak/xdg-desktop-portal)
-[original author: GermainZ](https://github.com/GermainZ/xdg-desktop-portal-termfilechooser)
-[xdg-desktop-portal-wlr](https://github.com/emersion/xdg-desktop-portal-wlr)
-[ranger](https://github.com/ranger/ranger/)
-[yazi](https://github.com/sxyazi/yazi/)
-[lf](https://github.com/gokcehan/lf)
-[fzf](https://github.com/junegunn/fzf)
-[nnn](https://github.com/jarun/nnn)
-[vifm](https://github.com/vifm/vifm)
+[xdg-desktop-portal](https://github.com/flatpak/xdg-desktop-portal)  
+[original author: GermainZ](https://github.com/GermainZ/xdg-desktop-portal-termfilechooser)  
+[xdg-desktop-portal-wlr](https://github.com/emersion/xdg-desktop-portal-wlr)  
+[ranger](https://github.com/ranger/ranger/)  
+[yazi](https://github.com/sxyazi/yazi/)  
+[lf](https://github.com/gokcehan/lf)  
+[fzf](https://github.com/junegunn/fzf)  
+[nnn](https://github.com/jarun/nnn)  
+[vifm](https://github.com/vifm/vifm)  
