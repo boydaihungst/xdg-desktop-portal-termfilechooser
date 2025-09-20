@@ -1,4 +1,4 @@
-# xdg-desktop-portal-termfilechooser
+# xdg-desktop-portal-termfilechooser (Fork)
 
 <!-- toc -->
 
@@ -45,7 +45,9 @@ you'll get a file-opening experience similar to macOS and Windows.
 
 For Arch:
 
-    yay -S xdg-desktop-portal-termfilechooser-boydaihungst-git
+```sh
+yay -S xdg-desktop-portal-termfilechooser-boydaihungst-git
+```
 
 ### Build from source
 
@@ -53,136 +55,169 @@ For Arch:
 
 On apt-based systems:
 
-    sudo apt install xdg-desktop-portal build-essential ninja-build meson libinih-dev libsystemd-dev scdoc
+```sh
+sudo apt install xdg-desktop-portal build-essential ninja-build meson libinih-dev libsystemd-dev scdoc
+```
 
 For Arch, see the dependencies in the [AUR package](https://aur.archlinux.org/packages/xdg-desktop-portal-termfilechooser-boydaihungst-git#pkgdeps).
 
 #### Download the source
 
-    git clone https://github.com/boydaihungst/xdg-desktop-portal-termfilechooser
+```sh
+git clone https://github.com/boydaihungst/xdg-desktop-portal-termfilechooser
+```
 
 #### Build
 
 - Remove legacy files:
 
-      cd xdg-desktop-portal-termfilechooser
-      chmod +x remove_legacy_file.sh && sudo remove_legacy_file.sh
+  ```sh
+  cd xdg-desktop-portal-termfilechooser
+  chmod +x remove_legacy_file.sh && sudo remove_legacy_file.sh
+  ```
+
+- Then check and update if you are using any old version of wrapper script: `$HOME/.config/xdg-desktop-portal-termfilechooser/ANY-wrapper.sh`
+  If you use wrapper scripts from `/usr/share/xdg-desktop-portal-termfilechooser/ANY-wrapper.sh`, then it always up to date.
 
 - Build and install:
 
-      meson build --prefix=/usr
-      ninja -C build
-      sudo ninja -C build install
+  ```sh
+  meson build --prefix=/usr
+  ninja -C build
+  sudo ninja -C build install
+  ```
 
 ## Configuration
 
-Copy the `config` and any of the wrapper scripts in `contrib` dir to `~/.config/xdg-desktop-portal-termfilechooser`. Edit the `config` file to set your preferred terminal emulator and file manager applications.
+Copy the `config` and any of the wrapper scripts in `contrib` dir to `~/.config/xdg-desktop-portal-termfilechooser`.
+Edit the `config` file to set your preferred terminal emulator and file manager applications.
 
-For terminal emulator. You can set the `TERMCMD` environment variable instead of edit wrapper file. So you only need to copy `config`. By default wrappers
-is placed at `/usr/share/xdg-desktop-portal-termfilechooser/`
+For terminal emulator. You can set the `TERMCMD` environment variable instead of edit wrapper file.
+So you only need to copy `config`. By default wrappers is placed at `/usr/share/xdg-desktop-portal-termfilechooser/`
 
 Example:
 
 - `$HOME/.profile`
 - `.bashrc`
 
-```sh
-# use wezterm intead of kitty
-export TERMCMD="wezterm start --always-new-process"
-```
+  ```sh
+  # use wezterm intead of kitty
+  export TERMCMD="wezterm start --always-new-process"
+  ```
 
 - `$HOME/.config/xdg-desktop-portal-termfilechooser/config` or `$XDG_CONFIG_HOME/xdg-desktop-portal-termfilechooser/config`
   Use yazi wrapper instead of ranger wrapper:
 
-      [filechooser]
-      cmd=/usr/share/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh
-      default_dir=$HOME
+  ```toml
+  [filechooser]
+  cmd=/usr/share/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh
+  default_dir=$HOME
+  ```
 
-  Use custom yazi wrapper instead of default wrapper:
+- Use custom yazi wrapper instead of default wrapper:
 
-      [filechooser]
-      cmd=$HOME/.config/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh
-      default_dir=$HOME
+  ```toml
+  [filechooser]
+  cmd=$HOME/.config/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh
+  default_dir=$HOME
+  ```
 
-      or
+- or
 
-      [filechooser]
-      cmd=$XDG_CONFIG_HOME/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh
-      default_dir=$HOME
+  ```toml
+  [filechooser]
+  cmd=$XDG_CONFIG_HOME/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh
+  default_dir=$HOME
+  ```
 
-`default_dir` is where the app, which triggers download/upload or select file/folder, suggested to save file.
-For example in firefox it's `$HOME` the first time, after successfully selected/saved file, it will remember the last selected location. This location is suggested by the app (e.g. firefox), not by xdg-desktop-portal-termfilechooser itself.
+The `default_dir` is used in case where the app, which triggers download/upload or select file/folder, doesn't suggested location to save/open file/directory.
+For example in firefox it's `$HOME` the first time, after successfully selected/saved file, it will remember the last selected location.
+This location is suggested by the app (e.g. firefox), not by xdg-desktop-portal-termfilechooser itself. Normally, it remember the last selected location based on file extension.
 
 ### Disable the original file picker portal
 
-If your xdg-desktop-portal version
+- If your xdg-desktop-portal version is >= [`1.18.0`](https://github.com/flatpak/xdg-desktop-portal/releases/tag/1.18.0), then you can specify the portal for FileChooser in `~/.config/xdg-desktop-portal/portals.conf` file (see the [flatpak docs](https://flatpak.github.io/xdg-desktop-portal/docs/portals.conf.html) and [ArchWiki](https://wiki.archlinux.org/title/XDG_Desktop_Portal#Configuration)):
 
-    xdg-desktop-portal --version
-    # If xdg-desktop-portal not on $PATH, try:
-    /usr/libexec/xdg-desktop-portal --version
+  ```sh
+  # Get version of xdg-desktop-portal
+  xdg-desktop-portal --version
+  # If xdg-desktop-portal not on $PATH, try:
+  /usr/libexec/xdg-desktop-portal --version
 
-    # OR, if it says file not found
-    /usr/libexec/xdg-desktop-portal --version
-    # OR
-    /usr/lib64/xdg-desktop-portal --version
-    # OR
-    /usr/lib64/xdg-desktop-portal --version
+  # OR, if it says file not found
+  /usr/libexec/xdg-desktop-portal --version
+  # OR
+  /usr/lib64/xdg-desktop-portal --version
+  # OR
+  /usr/lib64/xdg-desktop-portal --version
+  ```
 
-is >= [`1.18.0`](https://github.com/flatpak/xdg-desktop-portal/releases/tag/1.18.0), then you can specify the portal for FileChooser in `~/.config/xdg-desktop-portal/portals.conf` file (see the [flatpak docs](https://flatpak.github.io/xdg-desktop-portal/docs/portals.conf.html) and [ArchWiki](https://wiki.archlinux.org/title/XDG_Desktop_Portal#Configuration)):
+  ```toml
+  [preferred]
+  org.freedesktop.impl.portal.FileChooser=termfilechooser
+  ```
 
-    [preferred]
-    org.freedesktop.impl.portal.FileChooser=termfilechooser
+- If your `xdg-desktop-portal --version` is older, you can remove `FileChooser` from `Interfaces` of the `{gtk;kde;…}.portal` files:
 
-If your `xdg-desktop-portal --version` is older, you can remove `FileChooser` from `Interfaces` of the `{gtk;kde;…}.portal` files:
-
-    find /usr/share/xdg-desktop-portal/portals -name '*.portal' -not -name 'termfilechooser.portal' \
-    	-exec grep -q 'FileChooser' '{}' \; \
-    	-exec sudo sed -i'.bak' 's/org\.freedesktop\.impl\.portal\.FileChooser;\?//g' '{}' \;
+  ```sh
+  find /usr/share/xdg-desktop-portal/portals -name '*.portal' -not -name 'termfilechooser.portal' \
+  -exec grep -q 'FileChooser' '{}' \; \
+  -exec sudo sed -i'.bak' 's/org\.freedesktop\.impl\.portal\.FileChooser;\?//g' '{}' \;
+  ```
 
 ### Systemd service
 
-Restart the portal service:
+- Restart the portal service:
 
-    systemctl --user restart xdg-desktop-portal.service
+  ```sh
+  systemctl --user restart xdg-desktop-portal.service
+  ```
 
 ### For yazi only (Optional)
 
-If you use yazi-wrapper.sh, you should install [boydaihungst/hover-after-moved.yazi](https://github.com/boydaihungst/hover-after-moved.yazi).
+If you use yazi-wrapper.sh, you could install [boydaihungst/hover-after-moved.yazi](https://github.com/boydaihungst/hover-after-moved.yazi).
 So when you move placeholder file to other directory, yazi will auto hover over it.
 The placeholder file is created by termfilechooser when you save/download a file.
 
 ## Test
 
-    GTK_USE_PORTAL=1  zenity --file-selection
-    GTK_USE_PORTAL=1  zenity --file-selection --directory
-    GTK_USE_PORTAL=1  zenity --file-selection  --multiple
+```sh
+GTK_USE_PORTAL=1  zenity --file-selection
+GTK_USE_PORTAL=1  zenity --file-selection --directory
+GTK_USE_PORTAL=1  zenity --file-selection  --multiple
 
-    Change `USER` to your `username`
-    GTK_USE_PORTAL=1  zenity --file-selection  --save  --filename='/home/USER/save_file_$.txt
+# Change `USER` to your `username`:
+GTK_USE_PORTAL=1  zenity --file-selection  --save  --filename='/home/USER/save_file_$.txt
+```
 
 and additional options: `--multiple`, `--directory`, `--save`.
 
 #### Troubleshooting
 
 - After editing termfilechooser's config, restart its service:
-  `systemctl --user restart xdg-desktop-portal-termfilechooser.service`
 
-- The termfilechooser's executable can also be launched directly:
+  ```sh
+  systemctl --user restart xdg-desktop-portal-termfilechooser.service
+  ```
 
-      systemctl --user stop xdg-desktop-portal-termfilechooser.service
-      /usr/libexec/xdg-desktop-portal-termfilechooser -l TRACE -r
+- Debug the termfilechooser:
 
-  or, if it says file/folder not found:
+  ```sh
+  systemctl --user stop xdg-desktop-portal-termfilechooser.service
+  /usr/libexec/xdg-desktop-portal-termfilechooser -l TRACE -r
+  ```
 
-      systemctl --user stop xdg-desktop-portal-termfilechooser.service
-      /usr/lib64/xdg-desktop-portal-termfilechooser -l TRACE -r
-      /usr/lib64/xdg-desktop-portal-termfilechooser -l TRACE -r
+  Or, if it says `No such file or directory`:
 
-  This way the output from the wrapper scripts (e.g. `ranger-wrapper.sh`) will be written to the same terminal. This is handy for using e.g. `set -x` in the scripts during debugging.
-  When termfilechooser runs as a `systemd` service, its output can be viewer with `journalctl`.
-  Increase `-n 1000` (lines) to show more lines
+  ```sh
+  # Run command below to get the location of xdg-desktop-portal-termfilechooser, which is ExecStart=COMMAND
+  systemctl --user status xdg-desktop-portal-termfilechooser.service.
+  /path/to/xdg-desktop-portal-termfilechooser -l TRACE -r
+  ```
 
-      journalctl -e -f --user -n 1000 -u xdg-desktop-portal-termfilechooser.service
+  This way the output from the wrapper scripts (e.g. `yazi-wrapper.sh`) will be written to the same terminal.
+  Then try to reproduce the bug. Finally, upload create an issue and upload logs,
+  app use xdg-open to open/save file and the custom wrapper script if you use it.
 
 - Since [this merge request in GNOME](https://gitlab.gnome.org/GNOME/gtk/-/merge_requests/4829), `GTK_USE_PORTAL=1` seems to be replaced with `GDK_DEBUG=portals`.
 
