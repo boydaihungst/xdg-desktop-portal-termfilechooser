@@ -108,7 +108,7 @@ Example:
 - `$HOME/.config/xdg-desktop-portal-termfilechooser/config` or `$XDG_CONFIG_HOME/xdg-desktop-portal-termfilechooser/config`
   Use yazi wrapper instead of ranger wrapper:
 
-  ```toml
+  ```dosini
   [filechooser]
   cmd=/usr/share/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh
   default_dir=$HOME
@@ -116,7 +116,7 @@ Example:
 
 - Use custom yazi wrapper instead of default wrapper:
 
-  ```toml
+  ```dosini
   [filechooser]
   cmd=$HOME/.config/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh
   default_dir=$HOME
@@ -124,7 +124,7 @@ Example:
 
 - or
 
-  ```toml
+  ```dosini
   [filechooser]
   cmd=$XDG_CONFIG_HOME/xdg-desktop-portal-termfilechooser/yazi-wrapper.sh
   default_dir=$HOME
@@ -152,7 +152,7 @@ This location is suggested by the app (e.g. firefox), not by xdg-desktop-portal-
   /usr/lib64/xdg-desktop-portal --version
   ```
 
-  ```toml
+  ```dosini
   [preferred]
   org.freedesktop.impl.portal.FileChooser=termfilechooser
   ```
