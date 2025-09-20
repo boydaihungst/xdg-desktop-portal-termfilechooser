@@ -280,7 +280,7 @@ static int method_open_file(sd_bus_message *msg, void *data,
 
   char **selected_files = NULL;
   size_t num_selected_files = 0;
-  if (current_folder == NULL) {
+  if (current_folder == NULL || current_folder[0] != '/') {
     struct xdpw_state *state = data;
     char *default_dir = state->config->filechooser_conf.default_dir;
     if (!default_dir) {
@@ -446,7 +446,7 @@ static int method_save_file(sd_bus_message *msg, void *data,
     return -ENOMEM;
   }
 
-  if (current_folder == NULL) {
+  if (current_folder == NULL || current_folder[0] != '/') {
     struct xdpw_state *state = data;
     char *default_dir = state->config->filechooser_conf.default_dir;
     if (!default_dir) {
