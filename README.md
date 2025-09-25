@@ -13,11 +13,14 @@
 - [Configuration](#configuration)
   - [Disable the original file picker portal](#disable-the-original-file-picker-portal)
   - [Systemd service](#systemd-service)
-  - [For yazi only (Optional)](#for-yazi-only-optional)
 - [Test](#test)
   - [Troubleshooting](#troubleshooting)
 - [For developers](#for-developers)
 - [Usage](#usage)
+- [Tricks (Optional)](#tricks-optional)
+  - [For yazi only: Hover over placeholder file after moving it](#for-yazi-only-hover-over-placeholder-file-after-moving-it)
+  - [For wezterm only: Display file operation in window title](#for-wezterm-only-display-file-operation-in-window-title)
+  - [Floating file selector with tiling window manager like (hyprland, sway, i3, etc):](#floating-file-selector-with-tiling-window-manager-like-hyprland-sway-i3-etc)
 - [Documentation](#documentation)
 - [License](#license)
 
@@ -36,6 +39,8 @@ By combining `xdg-desktop-portal-termfilechooser` with `org.freedesktop.FileMana
 you'll get a file-opening experience similar to macOS and Windows.
 
 ## Alternative
+
+For NixOs, more configurations, and better support, see:
 
 [https://github.com/hunkyburrito/xdg-desktop-portal-termfilechooser](https://github.com/hunkyburrito/xdg-desktop-portal-termfilechooser)
 
@@ -130,9 +135,9 @@ Example:
   default_dir=$HOME
   ```
 
-The `default_dir` is used in case where the app, which triggers download/upload or select file/folder, doesn't suggested location to save/open file/directory or suggested a relative path to its CWD, which we can't access from dbus message.  
+The `default_dir` is used in case the app, which triggers download/upload or select file/folder, doesn't suggested location to save/open file/directory or suggested a relative path to its CWD, which we can't access from dbus message.
 For example in firefox it's `$HOME` the first time, after successfully selected/saved file, it will remember the last selected location.
-This location is suggested by the app (e.g. firefox), not by xdg-desktop-portal-termfilechooser itself. Normally, it remember the last selected location based on file extension.
+This location is suggested by the app (e.g. firefox), not by xdg-desktop-portal-termfilechooser itself. Normally, it remember the last selected location based on file extension. Rare case like Obsidian, always suggest relative path = `.`, so we have to fallback to `default_dir`, because we don't know where the CWD of Obsidian is.
 
 ### Disable the original file picker portal
 
@@ -143,13 +148,14 @@ This location is suggested by the app (e.g. firefox), not by xdg-desktop-portal-
   xdg-desktop-portal --version
   # If xdg-desktop-portal not on $PATH, try:
   /usr/libexec/xdg-desktop-portal --version
+  ```
 
-  # OR, if it says file not found
-  /usr/libexec/xdg-desktop-portal --version
-  # OR
-  /usr/lib64/xdg-desktop-portal --version
-  # OR
-  /usr/lib64/xdg-desktop-portal --version
+  Or, if it says `No such file or directory`:
+
+  ```sh
+  # Run command below to get the location of xdg-desktop-portal, which is ExecStart=COMMAND
+  systemctl cat --user xdg-desktop-portal.service
+  /path/to/xdg-desktop-portal -l TRACE -r
   ```
 
   ```dosini
@@ -172,12 +178,6 @@ This location is suggested by the app (e.g. firefox), not by xdg-desktop-portal-
   ```sh
   systemctl --user restart xdg-desktop-portal.service
   ```
-
-### For yazi only (Optional)
-
-If you use yazi-wrapper.sh, you could install [boydaihungst/hover-after-moved.yazi](https://github.com/boydaihungst/hover-after-moved.yazi).
-So when you move placeholder file to other directory, yazi will auto hover over it.
-The placeholder file is created by termfilechooser when you save/download a file.
 
 ## Test
 
@@ -204,14 +204,14 @@ and additional options: `--multiple`, `--directory`, `--save`.
 
   ```sh
   systemctl --user stop xdg-desktop-portal-termfilechooser.service
-  /usr/libexec/xdg-desktop-portal-termfilechooser -l TRACE -r
+  /usr/lib/xdg-desktop-portal-termfilechooser -l TRACE -r
   ```
 
   Or, if it says `No such file or directory`:
 
   ```sh
   # Run command below to get the location of xdg-desktop-portal-termfilechooser, which is ExecStart=COMMAND
-  systemctl --user status xdg-desktop-portal-termfilechooser.service.
+  systemctl --user cat xdg-desktop-portal-termfilechooser.service.
   /path/to/xdg-desktop-portal-termfilechooser -l TRACE -r
   ```
 
@@ -228,11 +228,58 @@ and additional options: `--multiple`, `--directory`, `--save`.
 - Stop service: `systemctl --user stop xdg-desktop-portal-termfilechooser.service`
 - Build and run in debug mode: `meson build --prefix=/usr --reconfigure && ninja -C build && ./build/xdg-desktop-portal-termfilechooser  -l TRACE -r`
 - Monitor dbus message: `dbus-monitor --session "interface='org.freedesktop.portal.FileChooser'"`
-- Explain what the values from dbus message for: https://github.com/flatpak/xdg-desktop-portal/blob/main/data/org.freedesktop.portal.FileChooser.xml
+- Explain dbus message values meaning: https://github.com/flatpak/xdg-desktop-portal/blob/main/data/org.freedesktop.portal.FileChooser.xml
 
 ## Usage
 
 Firefox has a setting in its `about:config` to always use XDG desktop portal's file chooser: set `widget.use-xdg-desktop-portal.file-picker` to `1`. See [https://wiki.archlinux.org/title/Firefox#XDG_Desktop_Portal_integration](https://wiki.archlinux.org/title/Firefox#XDG_Desktop_Portal_integration).
+
+## Tricks (Optional)
+
+### For yazi only: Hover over placeholder file after moving it
+
+If you use yazi-wrapper.sh, you could install [boydaihungst/hover-after-moved.yazi](https://github.com/boydaihungst/hover-after-moved.yazi).
+So when you move placeholder file to other directory, yazi will auto hover over it.
+The placeholder file is created by termfilechooser when you save/download a file.
+
+### For wezterm only: Display file operation in window title
+
+If you use any wrapper.sh with wezterm, you could add the following lua script to `wezterm.lua`.
+So when wezterm is open with your preferred file manager, it will display workspace name beside the cwd path:
+
+```lua
+local wezterm = require("wezterm")
+wezterm.on("format-window-title", function(tab, pane, tabs, panes, config)
+	local ws = wezterm.mux.get_active_workspace()
+	local title = tab.active_pane.title
+	if ws ~= "default" then
+		return string.format("[%s] %s", ws, title)
+	end
+	return title
+end)
+```
+
+Also open your preferred wrapper.sh and edit the line `termcmd=` to `termcmd="${TERMCMD:-/usr/bin/wezterm start --class 'yazi' --workspace $(quote_string "$TITLE")}"`
+
+Results:
+
+<img width="215" alt="image" src="https://github.com/user-attachments/assets/d9ea74c8-0687-4d87-8014-ae9a991fae9a" />
+
+<img width="300" alt="image" src="https://github.com/user-attachments/assets/1168cad0-1b1a-4c75-8076-003421328f4a" />
+
+<img width="300" alt="image" src="https://github.com/user-attachments/assets/35ce00e0-4d79-48db-bf51-27f5b0584f4f" />
+
+### Floating file selector with tiling window manager like (hyprland, sway, i3, etc):
+
+Open your preferred wrapper.sh and edit `--class` or `--app-id` in the line `termcmd=` to whatever value you want.
+For example kitty + yazi: `termcmd="${TERMCMD:-kitty --app-id 'yazi-selector' --title $(quote_string "$TITLE")}"`
+
+hyprland.conf floating window with app-id/class = yazi-selector:
+
+```dosini
+windowrulev2 = float, class:^yazi-selector$
+windowrulev2 = size 80% 90%, class:^yazi-selector$
+```
 
 ## Documentation
 
