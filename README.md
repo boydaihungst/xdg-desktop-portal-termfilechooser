@@ -13,6 +13,7 @@
 - [Configuration](#configuration)
   - [Disable the original file picker portal](#disable-the-original-file-picker-portal)
   - [Systemd service](#systemd-service)
+  - [Without Systemd (elogind or basu)](#without-systemd-elogind-or-basu)
 - [Test](#test)
   - [Troubleshooting](#troubleshooting)
 - [For developers](#for-developers)
@@ -179,6 +180,24 @@ This location is suggested by the app (e.g. firefox), not by xdg-desktop-portal-
   systemctl --user restart xdg-desktop-portal.service
   ```
 
+### Without Systemd (elogind or basu)
+
+Run `/usr/libexec/xdg-desktop-portal-termfilechooser & && disown` directly in .bashrc or .zshrc or whatever shell you use.
+
+Or run directly via window manager:
+
+- sway:
+
+  ```sh
+  exec /usr/libexec/xdg-desktop-portal-termfilechooser
+  ```
+
+- hyprland:
+
+  ```sh
+  exec-once = /usr/libexec/xdg-desktop-portal-termfilechooser
+  ```
+
 ## Test
 
 ```sh
@@ -289,12 +308,12 @@ See `man 5 xdg-desktop-portal-termfilechooser`.
 
 MIT
 
-[xdg-desktop-portal](https://github.com/flatpak/xdg-desktop-portal)  
-[original author: GermainZ](https://github.com/GermainZ/xdg-desktop-portal-termfilechooser)  
-[xdg-desktop-portal-wlr](https://github.com/emersion/xdg-desktop-portal-wlr)  
-[ranger](https://github.com/ranger/ranger/)  
-[yazi](https://github.com/sxyazi/yazi/)  
-[lf](https://github.com/gokcehan/lf)  
-[fzf](https://github.com/junegunn/fzf)  
-[nnn](https://github.com/jarun/nnn)  
-[vifm](https://github.com/vifm/vifm)  
+[xdg-desktop-portal](https://github.com/flatpak/xdg-desktop-portal)
+[original author: GermainZ](https://github.com/GermainZ/xdg-desktop-portal-termfilechooser)
+[xdg-desktop-portal-wlr](https://github.com/emersion/xdg-desktop-portal-wlr)
+[ranger](https://github.com/ranger/ranger/)
+[yazi](https://github.com/sxyazi/yazi/)
+[lf](https://github.com/gokcehan/lf)
+[fzf](https://github.com/junegunn/fzf)
+[nnn](https://github.com/jarun/nnn)
+[vifm](https://github.com/vifm/vifm)
