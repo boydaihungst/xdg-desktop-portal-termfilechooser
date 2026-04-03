@@ -255,7 +255,11 @@ Firefox has a setting in its `about:config` to always use XDG desktop portal's f
 
 ## Tricks (Optional)
 
-### For yazi only: Hover over placeholder file after moving it
+### For yazi only: Hover over placeholder file after moving it (Deprecated)
+
+> [!IMPORTANT]
+> With the new version of yazi (> v26.1.22), this plugin is no longer need.  
+> Check this: https://github.com/sxyazi/yazi/pull/3846
 
 If you use yazi-wrapper.sh, you could install [boydaihungst/hover-after-moved.yazi](https://github.com/boydaihungst/hover-after-moved.yazi).
 So when you move placeholder file to other directory, yazi will auto hover over it.
