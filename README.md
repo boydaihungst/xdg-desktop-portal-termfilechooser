@@ -79,7 +79,7 @@ git clone https://github.com/boydaihungst/xdg-desktop-portal-termfilechooser
 
   ```sh
   cd xdg-desktop-portal-termfilechooser
-  chmod +x remove_legacy_file.sh && sudo remove_legacy_file.sh
+  chmod +x remove_legacy_file.sh && sudo ./remove_legacy_file.sh
   ```
 
 - Then check and update if you are using any old version of wrapper script: `$HOME/.config/xdg-desktop-portal-termfilechooser/ANY-wrapper.sh`
